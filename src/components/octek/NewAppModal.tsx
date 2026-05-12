@@ -70,7 +70,7 @@ export function NewAppModal({ open, onClose, onCreated }: Props) {
           <div className="w-8 h-8 rounded-lg bg-[var(--accent)]/15 text-[var(--accent)] grid place-items-center">
             <Plus size={16} />
           </div>
-          <div className="font-semibold">New App</div>
+          <div className="font-semibold">Create New App</div>
           <button
             type="button"
             onClick={onClose}
