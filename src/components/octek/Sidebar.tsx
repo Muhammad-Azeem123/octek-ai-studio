@@ -1,4 +1,5 @@
-import { Plus, FileText, Loader2, Lock } from "lucide-react";
+import { useState } from "react";
+import { Plus, FileText, Loader2, Lock, Search, X } from "lucide-react";
 import { Logo } from "./Logo";
 import { ThemeToggle } from "./ThemeToggle";
 import type { AppItem } from "@/lib/api";
