@@ -1,5 +1,6 @@
 import { Plus, FileText, Loader2 } from "lucide-react";
 import { Logo } from "./Logo";
+import { ThemeToggle } from "./ThemeToggle";
 import type { AppItem } from "@/lib/api";
 
 interface Props {
@@ -79,6 +80,12 @@ export function Sidebar({ apps, loading, selectedId, onSelect, onNewApp }: Props
             </button>
           );
         })}
+      </div>
+      <div className="px-[18px] py-3 border-t border-[var(--border)] flex items-center justify-between">
+        <span className="text-[10px] tracking-[0.15em] text-[var(--text-muted)] font-semibold uppercase">
+          Theme
+        </span>
+        <ThemeToggle />
       </div>
     </aside>
   );

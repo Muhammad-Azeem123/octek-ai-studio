@@ -75,6 +75,22 @@
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 }
 
+:root.light {
+  --bg-primary: #f7f9fc;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #eef2f8;
+  --bg-card: #ffffff;
+  --border: #e2e8f0;
+  --border-hover: #cbd5e1;
+  --text-primary: #0f1729;
+  --text-secondary: #4a5568;
+  --text-muted: #94a3b8;
+  --chat-human: #d6ebff;
+  --chat-ai: #f1f5f9;
+  --accent-glow: rgba(0, 168, 130, 0.18);
+  --accent-glow-strong: rgba(0, 168, 130, 0.32);
+}
+
 @layer base {
   * { border-color: var(--color-border-base); }
   html, body, #root { height: 100%; }
