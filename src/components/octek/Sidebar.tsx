@@ -81,6 +81,12 @@ export function Sidebar({ apps, loading, selectedId, onSelect, onNewApp }: Props
           );
         })}
       </div>
+      <div className="px-[18px] py-3 border-t border-[var(--border)] flex items-center justify-between">
+        <span className="text-[10px] tracking-[0.15em] text-[var(--text-muted)] font-semibold uppercase">
+          Theme
+        </span>
+        <ThemeToggle />
+      </div>
     </aside>
   );
 }
