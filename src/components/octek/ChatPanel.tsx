@@ -184,19 +184,43 @@ export function ChatPanel({
     }
   }
 
+  const remaining = Math.max(0, promptLimit - promptCount);
+
   return (
     <aside
-      className="flex flex-col bg-[var(--bg-secondary)] border-l border-[var(--border)] shrink-0"
+      className="relative flex flex-col bg-[var(--bg-secondary)] border-l border-[var(--border)] shrink-0"
       style={{ width: "var(--chat-width)" }}
     >
       {/* Header */}
       <div className="px-4 py-3 border-b border-[var(--border)] flex items-center gap-2">
         <MessageSquare size={16} className="text-[var(--accent)]" />
         <div className="font-semibold text-sm truncate">{app?.name ?? "No app selected"}</div>
+        {!userVerified && (
+          <div
+            className={`ml-auto text-[10px] font-mono px-2 py-0.5 rounded-full border ${
+              locked
+                ? "bg-[var(--danger)]/10 border-[var(--danger)]/40 text-[var(--danger)]"
+                : "bg-[var(--accent)]/10 border-[var(--accent)]/40 text-[var(--accent)]"
+            }`}
+            title="Free demo prompts"
+          >
+            {locked ? (
+              <span className="inline-flex items-center gap-1">
+                <Lock size={9} /> Locked
+              </span>
+            ) : (
+              <>FREE {remaining}/{promptLimit}</>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Dropdowns */}
-      <div className="px-3 py-2.5 border-b border-[var(--border)] grid grid-cols-2 gap-2">
+      <div
+        className={`px-3 py-2.5 border-b border-[var(--border)] grid grid-cols-2 gap-2 transition-opacity ${
+          locked ? "opacity-50 pointer-events-none" : ""
+        }`}
+      >
         <Select value={framework} onChange={setFramework} options={FRAMEWORKS.map((f) => ({ value: f.value, label: f.label }))} />
         <Select value={model} onChange={setModel} options={MODELS.map((m) => ({ value: m, label: m }))} />
       </div>
