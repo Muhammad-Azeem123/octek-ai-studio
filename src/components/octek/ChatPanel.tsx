@@ -8,10 +8,12 @@ import {
   Loader2,
   FileText,
   Image as ImageIcon,
+  Lock,
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { api, fileToBase64, normalizeConvo, type AppItem, type ConvoMessage } from "@/lib/api";
 import { useToast } from "./ToastProvider";
+import { LockedOverlay } from "./LockedOverlay";
 
 const FRAMEWORKS = [
   { value: "claude-code", label: "claude-code" },
@@ -33,6 +35,11 @@ interface Props {
   app: AppItem | null;
   verifiedKey: string | null;
   onAfterSend: () => void;
+  locked?: boolean;
+  promptCount?: number;
+  promptLimit?: number;
+  userVerified?: boolean;
+  onVerifyClick?: () => void;
 }
 
 interface AttachmentDraft {
@@ -42,7 +49,16 @@ interface AttachmentDraft {
   error?: string;
 }
 
-export function ChatPanel({ app, verifiedKey, onAfterSend }: Props) {
+export function ChatPanel({
+  app,
+  verifiedKey,
+  onAfterSend,
+  locked = false,
+  promptCount = 0,
+  promptLimit = 2,
+  userVerified = false,
+  onVerifyClick,
+}: Props) {
   const [framework, setFramework] = useState(FRAMEWORKS[0].value);
   const [model, setModel] = useState(MODELS[0]);
   const [messages, setMessages] = useState<ConvoMessage[]>([]);
