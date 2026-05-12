@@ -63,7 +63,7 @@ export function Sidebar({ apps, loading, selectedId, onSelect, onNewApp, canCrea
             No apps yet. Click + New App to start.
           </div>
         )}
-        {apps.map((a) => {
+        {sortedApps.map((a) => {
           const active = a.app_id === selectedId;
           return (
             <button
