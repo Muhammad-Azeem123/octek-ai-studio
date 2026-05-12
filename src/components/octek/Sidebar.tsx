@@ -1,4 +1,4 @@
-import { Plus, FileText, Loader2 } from "lucide-react";
+import { Plus, FileText, Loader2, Lock } from "lucide-react";
 import { Logo } from "./Logo";
 import { ThemeToggle } from "./ThemeToggle";
 import type { AppItem } from "@/lib/api";
@@ -9,9 +9,15 @@ interface Props {
   selectedId: string | null;
   onSelect: (a: AppItem) => void;
   onNewApp: () => void;
+  canCreate: boolean;
 }
 
-export function Sidebar({ apps, loading, selectedId, onSelect, onNewApp }: Props) {
+export function Sidebar({ apps, loading, selectedId, onSelect, onNewApp, canCreate }: Props) {
+  const sortedApps = [...apps].sort((a, b) => {
+    const ad = (a as any).createdAt ? new Date((a as any).createdAt).getTime() : (a as any).id ?? 0;
+    const bd = (b as any).createdAt ? new Date((b as any).createdAt).getTime() : (b as any).id ?? 0;
+    return bd - ad;
+  });
   return (
     <aside
       className="flex flex-col bg-[var(--bg-secondary)] border-r border-[var(--border)] shrink-0"
@@ -28,11 +34,18 @@ export function Sidebar({ apps, loading, selectedId, onSelect, onNewApp }: Props
 
         <button
           onClick={onNewApp}
-          className="mt-4 w-full flex items-center justify-center gap-2 bg-[var(--accent)] hover:bg-[var(--accent-dim)] text-[#06140f] font-bold py-2.5 rounded-[var(--radius)] text-sm transition-colors glow-accent"
+          disabled={!canCreate}
+          title={canCreate ? "Create a new app" : "Verify your API key first"}
+          className="mt-4 w-full flex items-center justify-center gap-2 bg-[var(--accent)] hover:bg-[var(--accent-dim)] disabled:opacity-50 disabled:cursor-not-allowed text-[#06140f] font-bold py-2.5 rounded-[var(--radius)] text-sm transition-colors glow-accent"
         >
-          <Plus size={16} strokeWidth={3} />
+          {canCreate ? <Plus size={16} strokeWidth={3} /> : <Lock size={14} strokeWidth={3} />}
           New App
         </button>
+        {!canCreate && (
+          <p className="mt-2 text-[10px] text-[var(--text-muted)] leading-snug text-center">
+            Verify your API key to create new apps
+          </p>
+        )}
       </div>
 
       <div className="px-[18px] pt-4 pb-2 text-[10px] tracking-[0.15em] text-[var(--text-muted)] font-semibold">
@@ -50,7 +63,7 @@ export function Sidebar({ apps, loading, selectedId, onSelect, onNewApp }: Props
             No apps yet. Click + New App to start.
           </div>
         )}
-        {apps.map((a) => {
+        {sortedApps.map((a) => {
           const active = a.app_id === selectedId;
           return (
             <button

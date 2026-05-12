@@ -70,7 +70,7 @@ export function NewAppModal({ open, onClose, onCreated }: Props) {
           <div className="w-8 h-8 rounded-lg bg-[var(--accent)]/15 text-[var(--accent)] grid place-items-center">
             <Plus size={16} />
           </div>
-          <div className="font-semibold">New App</div>
+          <div className="font-semibold">Create New App</div>
           <button
             type="button"
             onClick={onClose}
@@ -101,24 +101,31 @@ export function NewAppModal({ open, onClose, onCreated }: Props) {
         </Field>
 
         <div>
-          <div className="text-[11px] tracking-[0.12em] uppercase text-[var(--text-muted)] mb-1.5 font-semibold">
-            Canvas size
-          </div>
           <div className="grid grid-cols-2 gap-3">
-            <input
-              value={width}
-              onChange={(e) => setWidth(e.target.value)}
-              placeholder="e.g. 1920"
-              className="input font-mono"
-              aria-label="Width"
-            />
-            <input
-              value={height}
-              onChange={(e) => setHeight(e.target.value)}
-              placeholder="e.g. 1080"
-              className="input font-mono"
-              aria-label="Height"
-            />
+            <div>
+              <div className="text-[11px] tracking-[0.12em] uppercase text-[var(--text-muted)] mb-1.5 font-semibold">
+                Width
+              </div>
+              <input
+                value={width}
+                onChange={(e) => setWidth(e.target.value)}
+                placeholder="e.g. 1920"
+                className="input font-mono"
+                aria-label="Width"
+              />
+            </div>
+            <div>
+              <div className="text-[11px] tracking-[0.12em] uppercase text-[var(--text-muted)] mb-1.5 font-semibold">
+                Height
+              </div>
+              <input
+                value={height}
+                onChange={(e) => setHeight(e.target.value)}
+                placeholder="e.g. 1080"
+                className="input font-mono"
+                aria-label="Height"
+              />
+            </div>
           </div>
           <p className="text-[11px] text-[var(--text-muted)] mt-1.5 leading-snug">
             Set the canvas size for the app, or leave blank to make it responsive.
@@ -139,7 +146,7 @@ export function NewAppModal({ open, onClose, onCreated }: Props) {
             className="px-4 py-2 rounded-md bg-[var(--accent)] hover:bg-[var(--accent-dim)] disabled:opacity-50 text-[#06140f] text-sm font-bold flex items-center gap-2"
           >
             {submitting && <Loader2 size={14} className="animate-spin" />}
-            Create app
+            Create App
           </button>
         </div>
 
