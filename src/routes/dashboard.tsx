@@ -9,7 +9,7 @@ import { VerifyKeyModal } from "@/components/octek/VerifyKeyModal";
 import { ToastProvider, useToast } from "@/components/octek/ToastProvider";
 import { api, fileToBase64, type AppItem } from "@/lib/api";
 
-const DEMO_API_KEY = "AIzaSyA_wVvnlQiPMK2pBwVaEAuKmbxrHvcWDg8";
+const DEMO_API_KEY = "AIzaSyAiqKx68_2kX8HwnS0_JzZ4HK5WIX7GgDI";
 const DEMO_PROVIDER = "Google Gemini (demo)";
 const FREE_PROMPT_LIMIT = 2;
 const LS_PROMPT_COUNT = "octek-prompt-count";
@@ -192,7 +192,6 @@ function Dashboard() {
         setVerifiedKey={(k) => {
           setVerifiedKey(k);
           if (k && k !== DEMO_API_KEY) {
-            // Treat manual verification via the inline bar as user-verified too
             setUserVerifiedKey(k);
             try {
               localStorage.setItem(LS_USER_KEY, k);
@@ -209,6 +208,8 @@ function Dashboard() {
           }
         }}
         reloadToken={reloadToken}
+        locked={locked}
+        userVerified={!!userVerifiedKey}
       />
       <ChatPanel
         app={selected}

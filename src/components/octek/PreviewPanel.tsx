@@ -13,6 +13,8 @@ interface Props {
   provider: string | null;
   setProvider: (p: string | null) => void;
   reloadToken: number;
+  locked?: boolean;
+  userVerified?: boolean;
 }
 
 export function PreviewPanel({
@@ -24,6 +26,8 @@ export function PreviewPanel({
   provider,
   setProvider,
   reloadToken,
+  locked = false,
+  userVerified = false,
 }: Props) {
   const [show, setShow] = useState(false);
   const [verifying, setVerifying] = useState(false);
@@ -78,7 +82,12 @@ export function PreviewPanel({
   return (
     <section className="flex-1 min-w-0 flex flex-col bg-[var(--bg-primary)]">
       {/* API KEY BAR */}
-      <div className="h-11 flex items-center gap-2 px-3 border-b border-[var(--border)] bg-[var(--bg-secondary)]">
+      <div
+        className={`h-11 flex items-center gap-2 px-3 border-b border-[var(--border)] bg-[var(--bg-secondary)] transition-opacity ${
+          locked && !userVerified ? "opacity-50" : ""
+        }`}
+        title={locked && !userVerified ? "Verify your key from the chat panel to edit this" : undefined}
+      >
         <span className="text-[10px] tracking-[0.18em] font-semibold text-[var(--text-muted)] shrink-0">
           API KEY
         </span>
@@ -88,11 +97,13 @@ export function PreviewPanel({
             value={apiKey}
             onChange={(e) => setApiKey(e.target.value)}
             placeholder="Paste your provider API key"
-            className="w-full h-7 px-3 pr-8 rounded-[var(--radius)] bg-[var(--bg-tertiary)] border border-[var(--border)] focus:border-[var(--accent)] outline-none text-xs font-mono text-[var(--text-primary)] placeholder:text-[var(--text-muted)] transition-colors"
+            disabled={locked && !userVerified}
+            className="w-full h-7 px-3 pr-8 rounded-[var(--radius)] bg-[var(--bg-tertiary)] border border-[var(--border)] focus:border-[var(--accent)] outline-none text-xs font-mono text-[var(--text-primary)] placeholder:text-[var(--text-muted)] transition-colors disabled:cursor-not-allowed"
           />
           <button
             onClick={() => setShow((s) => !s)}
-            className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+            disabled={locked && !userVerified}
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-primary)] disabled:cursor-not-allowed"
             aria-label="Toggle visibility"
           >
             {show ? <EyeOff size={14} /> : <Eye size={14} />}
@@ -100,8 +111,8 @@ export function PreviewPanel({
         </div>
         <button
           onClick={verify}
-          disabled={verifying}
-          className="h-7 px-3 rounded-[var(--radius)] bg-[var(--accent)] hover:bg-[var(--accent-dim)] disabled:opacity-50 text-[#06140f] text-xs font-bold flex items-center gap-1.5 transition-colors"
+          disabled={verifying || (locked && !userVerified)}
+          className="h-7 px-3 rounded-[var(--radius)] bg-[var(--accent)] hover:bg-[var(--accent-dim)] disabled:opacity-50 disabled:cursor-not-allowed text-[#06140f] text-xs font-bold flex items-center gap-1.5 transition-colors"
         >
           {verifying && <Loader2 size={12} className="animate-spin" />}
           Verify
@@ -119,8 +130,6 @@ export function PreviewPanel({
           </div>
         )}
       </div>
-
-      {/* URL BAR */}
       <div className="h-11 flex items-center gap-2 px-3 border-b border-[var(--border)] bg-[var(--bg-secondary)]">
         {app ? (
           <>
