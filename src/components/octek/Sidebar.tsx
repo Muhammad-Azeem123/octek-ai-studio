@@ -1,4 +1,4 @@
-import { Plus, FileText, Loader2 } from "lucide-react";
+import { Plus, FileText, Loader2, Lock } from "lucide-react";
 import { Logo } from "./Logo";
 import { ThemeToggle } from "./ThemeToggle";
 import type { AppItem } from "@/lib/api";
@@ -9,6 +9,7 @@ interface Props {
   selectedId: string | null;
   onSelect: (a: AppItem) => void;
   onNewApp: () => void;
+  canCreate: boolean;
 }
 
 export function Sidebar({ apps, loading, selectedId, onSelect, onNewApp }: Props) {
