@@ -54,8 +54,48 @@ export function Sidebar({ apps, loading, selectedId, onSelect, onNewApp, canCrea
         )}
       </div>
 
-      <div className="px-[18px] pt-4 pb-2 text-[10px] tracking-[0.15em] text-[var(--text-muted)] font-semibold">
-        YOUR APPS
+      <div className="px-[18px] pt-4 pb-2 flex items-center justify-between">
+        <span className="text-[10px] tracking-[0.15em] text-[var(--text-muted)] font-semibold">
+          YOUR APPS
+        </span>
+        <span className="text-[10px] text-[var(--text-muted)] font-mono">
+          {filteredApps.length}/{apps.length}
+        </span>
+      </div>
+
+      <div className="px-[18px] pb-2">
+        <div className="relative">
+          <Search
+            size={12}
+            className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none"
+          />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search apps…"
+            className="w-full bg-[var(--bg-tertiary)] border border-[var(--border)] focus:border-[var(--accent)] outline-none rounded-md text-[12px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] pl-7 pr-7 py-1.5 transition-colors"
+          />
+          {query && (
+            <button
+              type="button"
+              onClick={() => setQuery("")}
+              title="Clear search"
+              aria-label="Clear search"
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 w-5 h-5 grid place-items-center rounded text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)]"
+            >
+              <X size={11} />
+            </button>
+          )}
+        </div>
+        {query && (
+          <button
+            type="button"
+            onClick={() => setQuery("")}
+            className="mt-1.5 w-full text-[10px] text-[var(--accent)] hover:underline text-left px-0.5"
+          >
+            Clear search
+          </button>
+        )}
       </div>
 
       <div className="flex-1 overflow-y-auto scrollbar-thin px-2 pb-3">
@@ -69,7 +109,12 @@ export function Sidebar({ apps, loading, selectedId, onSelect, onNewApp, canCrea
             No apps yet. Click + New App to start.
           </div>
         )}
-        {sortedApps.map((a) => {
+        {!loading && apps.length > 0 && filteredApps.length === 0 && (
+          <div className="px-3 py-6 text-xs text-[var(--text-muted)] text-center">
+            No apps match "{query}".
+          </div>
+        )}
+        {filteredApps.map((a) => {
           const active = a.app_id === selectedId;
           return (
             <button
