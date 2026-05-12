@@ -100,13 +100,29 @@ export function NewAppModal({ open, onClose, onCreated }: Props) {
           </select>
         </Field>
 
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="Width">
-            <input value={width} onChange={(e) => setWidth(e.target.value)} className="input font-mono" />
-          </Field>
-          <Field label="Height">
-            <input value={height} onChange={(e) => setHeight(e.target.value)} className="input font-mono" />
-          </Field>
+        <div>
+          <div className="text-[11px] tracking-[0.12em] uppercase text-[var(--text-muted)] mb-1.5 font-semibold">
+            Canvas size
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <input
+              value={width}
+              onChange={(e) => setWidth(e.target.value)}
+              placeholder="e.g. 1920"
+              className="input font-mono"
+              aria-label="Width"
+            />
+            <input
+              value={height}
+              onChange={(e) => setHeight(e.target.value)}
+              placeholder="e.g. 1080"
+              className="input font-mono"
+              aria-label="Height"
+            />
+          </div>
+          <p className="text-[11px] text-[var(--text-muted)] mt-1.5 leading-snug">
+            Set the canvas size for the app, or leave blank to make it responsive.
+          </p>
         </div>
 
         <div className="flex justify-end gap-2 mt-5">
