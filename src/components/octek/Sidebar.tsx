@@ -11,9 +11,10 @@ interface Props {
   onSelect: (a: AppItem) => void;
   onNewApp: () => void;
   canCreate: boolean;
+  locked?: boolean;
 }
 
-export function Sidebar({ apps, loading, selectedId, onSelect, onNewApp, canCreate }: Props) {
+export function Sidebar({ apps, loading, selectedId, onSelect, onNewApp, canCreate, locked }: Props) {
   const [query, setQuery] = useState("");
   const sortedApps = [...apps].sort((a, b) => {
     const ad = (a as any).createdAt ? new Date((a as any).createdAt).getTime() : (a as any).id ?? 0;
