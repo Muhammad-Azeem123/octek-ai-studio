@@ -192,7 +192,6 @@ function Dashboard() {
         setVerifiedKey={(k) => {
           setVerifiedKey(k);
           if (k && k !== DEMO_API_KEY) {
-            // Treat manual verification via the inline bar as user-verified too
             setUserVerifiedKey(k);
             try {
               localStorage.setItem(LS_USER_KEY, k);
@@ -209,6 +208,8 @@ function Dashboard() {
           }
         }}
         reloadToken={reloadToken}
+        locked={locked}
+        userVerified={!!userVerifiedKey}
       />
       <ChatPanel
         app={selected}
