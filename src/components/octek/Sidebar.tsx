@@ -14,11 +14,16 @@ interface Props {
 }
 
 export function Sidebar({ apps, loading, selectedId, onSelect, onNewApp, canCreate }: Props) {
+  const [query, setQuery] = useState("");
   const sortedApps = [...apps].sort((a, b) => {
     const ad = (a as any).createdAt ? new Date((a as any).createdAt).getTime() : (a as any).id ?? 0;
     const bd = (b as any).createdAt ? new Date((b as any).createdAt).getTime() : (b as any).id ?? 0;
     return bd - ad;
   });
+  const q = query.trim().toLowerCase();
+  const filteredApps = q
+    ? sortedApps.filter((a) => (a.name || "").toLowerCase().includes(q))
+    : sortedApps;
   return (
     <aside
       className="flex flex-col bg-[var(--bg-secondary)] border-r border-[var(--border)] shrink-0"
