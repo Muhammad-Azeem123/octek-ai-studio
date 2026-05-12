@@ -138,6 +138,10 @@ export function ChatPanel({
   }
 
   async function send() {
+    if (locked) {
+      onVerifyClick?.();
+      return;
+    }
     if (!app) {
       toast.push({ kind: "warning", title: "Select an app first" });
       return;
