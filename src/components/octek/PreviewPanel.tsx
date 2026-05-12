@@ -13,6 +13,8 @@ interface Props {
   provider: string | null;
   setProvider: (p: string | null) => void;
   reloadToken: number;
+  locked?: boolean;
+  userVerified?: boolean;
 }
 
 export function PreviewPanel({
@@ -24,6 +26,8 @@ export function PreviewPanel({
   provider,
   setProvider,
   reloadToken,
+  locked = false,
+  userVerified = false,
 }: Props) {
   const [show, setShow] = useState(false);
   const [verifying, setVerifying] = useState(false);
