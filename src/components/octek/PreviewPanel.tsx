@@ -48,12 +48,13 @@ export function PreviewPanel({
     setVerifyState("idle");
     try {
       const res = await api.detectKey(apiKey.trim());
-      const ok = res.valid !== false && res.success !== false && !res.error;
+      const detected = res.detectedProvider ?? res.provider;
+      const ok = (res.valid !== false && res.success !== false && !res.error) || !!detected;
       if (ok) {
         setVerifyState("ok");
         setVerifiedKey(apiKey.trim());
-        setProvider(res.provider ?? "Verified");
-        toast.push({ kind: "success", title: "API key verified", message: res.provider });
+        setProvider(detected ?? "Verified");
+        toast.push({ kind: "success", title: "API key verified", message: detected });
       } else {
         setVerifyState("fail");
         setVerifiedKey(null);
