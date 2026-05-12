@@ -1,5 +1,6 @@
 import { Plus, FileText, Loader2 } from "lucide-react";
 import { Logo } from "./Logo";
+import { ThemeToggle } from "./ThemeToggle";
 import type { AppItem } from "@/lib/api";
 
 interface Props {
