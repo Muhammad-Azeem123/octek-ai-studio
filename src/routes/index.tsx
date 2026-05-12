@@ -1,9 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { ArrowRight, Monitor, Sparkles, Key, Zap, LayoutDashboard, LogOut } from "lucide-react";
+import { ArrowRight, Monitor, Sparkles, Key, Zap } from "lucide-react";
 import { Logo } from "@/components/octek/Logo";
 import { ThemeToggle } from "@/components/octek/ThemeToggle";
-import { LS_AUTH, LS_AUTH_EMAIL } from "./login";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -20,30 +18,9 @@ export const Route = createFileRoute("/")({
 });
 
 function Landing() {
-  const [authed, setAuthed] = useState(false);
-  const [email, setEmail] = useState<string | null>(null);
-
-  useEffect(() => {
-    try {
-      setAuthed(localStorage.getItem(LS_AUTH) === "true");
-      setEmail(localStorage.getItem(LS_AUTH_EMAIL));
-    } catch {}
-  }, []);
-
-  function handleLogout() {
-    try {
-      localStorage.removeItem(LS_AUTH);
-      localStorage.removeItem(LS_AUTH_EMAIL);
-    } catch {}
-    setAuthed(false);
-    setEmail(null);
-  }
-
-  const primaryCtaTo = authed ? "/dashboard" : "/login";
-  const primaryCtaLabel = authed ? "Make Apps / Dashboard" : "Start Building Free";
-
   return (
     <div className="h-screen w-screen overflow-y-auto scrollbar-thin bg-[var(--bg-primary)] flex flex-col">
+      {/* Header */}
       <header className="flex items-center justify-between px-8 py-5 border-b border-[var(--border)]">
         <div className="flex items-center gap-2.5">
           <Logo size={28} />
@@ -56,46 +33,22 @@ function Landing() {
         </div>
         <div className="flex items-center gap-3">
           <ThemeToggle />
-          {authed ? (
-            <>
-              {email && (
-                <span className="hidden sm:inline text-xs text-[var(--text-muted)] font-mono truncate max-w-[180px]">
-                  {email}
-                </span>
-              )}
-              <button
-                onClick={handleLogout}
-                title="Log out"
-                className="text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] flex items-center gap-1.5"
-              >
-                <LogOut size={14} /> Log out
-              </button>
-              <Link
-                to="/dashboard"
-                className="bg-[var(--accent)] hover:bg-[var(--accent-dim)] text-[#06140f] font-bold text-sm px-4 py-2 rounded-md glow-accent transition-colors flex items-center gap-1.5"
-              >
-                <LayoutDashboard size={14} /> Make Apps / Dashboard
-              </Link>
-            </>
-          ) : (
-            <>
-              <Link
-                to="/login"
-                className="text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
-              >
-                Sign in
-              </Link>
-              <Link
-                to="/login"
-                className="bg-[var(--accent)] hover:bg-[var(--accent-dim)] text-[#06140f] font-bold text-sm px-4 py-2 rounded-md glow-accent transition-colors"
-              >
-                Start Building Free
-              </Link>
-            </>
-          )}
+          <Link
+            to="/dashboard"
+            className="text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+          >
+            Sign in
+          </Link>
+          <Link
+            to="/dashboard"
+            className="bg-[var(--accent)] hover:bg-[var(--accent-dim)] text-[#06140f] font-bold text-sm px-4 py-2 rounded-md glow-accent transition-colors"
+          >
+            Start Building Free
+          </Link>
         </div>
       </header>
 
+      {/* Hero */}
       <main className="flex-1">
         <section className="max-w-5xl mx-auto px-6 pt-20 pb-16 text-center">
           <div className="inline-flex items-center gap-1.5 text-xs font-mono px-3 py-1 rounded-full bg-[var(--bg-card)] border border-[var(--border)] text-[var(--accent)] mb-6">
@@ -112,14 +65,13 @@ function Landing() {
           </p>
           <div className="flex items-center justify-center gap-3 mt-8">
             <Link
-              to={primaryCtaTo}
+              to="/dashboard"
               className="bg-[var(--accent)] hover:bg-[var(--accent-dim)] text-[#06140f] font-bold px-5 py-3 rounded-md flex items-center gap-2 glow-accent-strong"
             >
-              {authed && <LayoutDashboard size={16} />}
-              {primaryCtaLabel} <ArrowRight size={16} />
+              Start Building Free <ArrowRight size={16} />
             </Link>
             <Link
-              to={primaryCtaTo}
+              to="/dashboard"
               className="bg-[var(--bg-card)] hover:bg-[var(--bg-tertiary)] border border-[var(--border)] px-5 py-3 rounded-md font-semibold"
             >
               See Demo
@@ -139,6 +91,7 @@ function Landing() {
           </div>
         </section>
 
+        {/* Free tier CTA */}
         <section className="max-w-5xl mx-auto px-6 pb-24">
           <div className="relative rounded-2xl border border-[var(--accent)]/40 bg-gradient-to-b from-[var(--bg-card)] to-[var(--bg-primary)] p-10 text-center glow-accent">
             <div className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full bg-[var(--accent)]/10 text-[var(--accent)] mb-5">
@@ -152,16 +105,16 @@ function Landing() {
               subscription.
             </p>
             <Link
-              to={primaryCtaTo}
+              to="/dashboard"
               className="inline-flex items-center gap-2 mt-7 bg-[var(--accent)] hover:bg-[var(--accent-dim)] text-[#06140f] font-bold px-6 py-3 rounded-md glow-accent-strong"
             >
-              {authed && <LayoutDashboard size={16} />}
-              {primaryCtaLabel} <ArrowRight size={16} />
+              Start Building Free <ArrowRight size={16} />
             </Link>
           </div>
         </section>
       </main>
 
+      {/* Footer */}
       <footer className="border-t border-[var(--border)] px-8 py-6 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <Logo size={24} />

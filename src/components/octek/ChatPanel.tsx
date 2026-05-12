@@ -222,17 +222,7 @@ export function ChatPanel({
         }`}
       >
         <Select value={framework} onChange={setFramework} options={FRAMEWORKS.map((f) => ({ value: f.value, label: f.label }))} />
-        <Select
-          value={model}
-          onChange={setModel}
-          disabled={!userVerified}
-          title={!userVerified ? "Verify your API key to switch models" : undefined}
-          options={
-            userVerified
-              ? MODELS.map((m) => ({ value: m, label: m }))
-              : [{ value: MODELS[0], label: `${MODELS[0]} (free)` }]
-          }
-        />
+        <Select value={model} onChange={setModel} options={MODELS.map((m) => ({ value: m, label: m }))} />
       </div>
 
       {/* Messages */}
@@ -382,22 +372,17 @@ function Select({
   value,
   onChange,
   options,
-  disabled = false,
-  title,
 }: {
   value: string;
   onChange: (v: string) => void;
   options: { value: string; label: string }[];
-  disabled?: boolean;
-  title?: string;
 }) {
   return (
-    <div className="relative" title={title}>
+    <div className="relative">
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        disabled={disabled}
-        className="w-full appearance-none bg-[var(--bg-tertiary)] border border-[var(--border)] hover:border-[var(--border-hover)] focus:border-[var(--accent)] rounded-md text-[11px] font-mono text-[var(--text-primary)] px-2.5 py-1.5 pr-6 outline-none transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
+        className="w-full appearance-none bg-[var(--bg-tertiary)] border border-[var(--border)] hover:border-[var(--border-hover)] focus:border-[var(--accent)] rounded-md text-[11px] font-mono text-[var(--text-primary)] px-2.5 py-1.5 pr-6 outline-none transition-colors cursor-pointer"
       >
         {options.map((o) => (
           <option key={o.value} value={o.value} className="bg-[var(--bg-secondary)]">
