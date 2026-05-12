@@ -50,7 +50,9 @@ export function Sidebar({ apps, loading, selectedId, onSelect, onNewApp, canCrea
         </button>
         {!canCreate && (
           <p className="mt-2 text-[10px] text-[var(--text-muted)] leading-snug text-center">
-            Verify your API key to create new apps
+            {locked
+              ? "Free demo limit reached — verify your API key to unlock"
+              : "Verify your API key to create new apps"}
           </p>
         )}
       </div>
