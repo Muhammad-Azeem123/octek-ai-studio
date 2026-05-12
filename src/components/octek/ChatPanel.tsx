@@ -305,32 +305,44 @@ export function ChatPanel({
       )}
 
       {/* Input */}
-      <div className="p-3 border-t border-[var(--border)]">
-        <div className="bg-[var(--bg-tertiary)] border border-[var(--border)] focus-within:border-[var(--accent)]/60 rounded-[var(--radius)] transition-colors">
+      <div className="relative p-3 border-t border-[var(--border)]">
+        <div
+          className={`bg-[var(--bg-tertiary)] border border-[var(--border)] focus-within:border-[var(--accent)]/60 rounded-[var(--radius)] transition-all ${
+            locked ? "opacity-40 blur-[1px] pointer-events-none select-none" : ""
+          }`}
+        >
           <textarea
             ref={taRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={onKeyDown}
-            placeholder="Describe what you want to build…"
+            placeholder={locked ? "Verify your API key to continue…" : "Describe what you want to build…"}
             rows={1}
-            className="w-full bg-transparent resize-none outline-none px-3 py-2.5 text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] scrollbar-thin"
+            disabled={locked}
+            className="w-full bg-transparent resize-none outline-none px-3 py-2.5 text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] scrollbar-thin disabled:cursor-not-allowed"
           />
           <div className="flex items-center gap-1 px-2 pb-2">
-            <label className="w-7 h-7 grid place-items-center rounded-md hover:bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] cursor-pointer">
+            <label
+              className={`w-7 h-7 grid place-items-center rounded-md hover:bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] ${
+                locked ? "cursor-not-allowed opacity-50" : "cursor-pointer"
+              }`}
+            >
               <Paperclip size={14} />
               <input
                 type="file"
                 multiple
                 accept="image/*,.pdf,.csv,.json,.txt,.md"
                 className="hidden"
+                disabled={locked}
                 onChange={(e) => e.target.files && handleFiles(e.target.files)}
               />
             </label>
             <button
-              onClick={() => setPlanning((p) => !p)}
+              type="button"
+              onClick={() => !locked && setPlanning((p) => !p)}
+              disabled={locked}
               title="Planning mode"
-              className={`h-7 px-2 rounded-md text-[11px] font-mono flex items-center gap-1 transition-colors ${
+              className={`h-7 px-2 rounded-md text-[11px] font-mono flex items-center gap-1 transition-colors disabled:cursor-not-allowed ${
                 planning
                   ? "bg-[var(--accent)]/15 text-[var(--accent)] border border-[var(--accent)]/40"
                   : "text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)]"
@@ -342,7 +354,7 @@ export function ChatPanel({
             <div className="flex-1" />
             <button
               onClick={send}
-              disabled={sending || !input.trim()}
+              disabled={sending || locked || !input.trim()}
               className="h-8 px-3 rounded-md bg-[var(--accent)] hover:bg-[var(--accent-dim)] disabled:opacity-40 disabled:cursor-not-allowed text-[#06140f] flex items-center gap-1.5 transition-colors"
             >
               {sending ? <Loader2 size={13} className="animate-spin" /> : <Send size={13} />}
@@ -350,6 +362,8 @@ export function ChatPanel({
           </div>
         </div>
       </div>
+
+      {locked && <LockedOverlay onVerify={() => onVerifyClick?.()} />}
     </aside>
   );
 }
