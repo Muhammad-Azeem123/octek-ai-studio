@@ -119,13 +119,15 @@
   .markdown-body p:last-child { margin-bottom: 0; }
   .markdown-body code {
     font-family: var(--font-mono);
-    background: rgba(0,0,0,0.35);
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
     padding: 1px 6px;
     border-radius: 4px;
     font-size: 0.85em;
   }
   .markdown-body pre {
-    background: #0b1322;
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
     border: 1px solid var(--border);
     border-radius: 8px;
     padding: 12px;

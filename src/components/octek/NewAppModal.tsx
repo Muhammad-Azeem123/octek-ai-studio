@@ -18,24 +18,17 @@ interface Props {
 export function NewAppModal({ open, onClose, onCreated }: Props) {
   const [name, setName] = useState("");
   const [mode, setMode] = useState("html");
-  const [width, setWidth] = useState("1280");
-  const [height, setHeight] = useState("800");
+  const [width, setWidth] = useState("");
+  const [height, setHeight] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const toast = useToast();
-
-  useEffect(() => {
-    if (mode.startsWith("gsap")) {
-      setWidth("1920");
-      setHeight("1080");
-    }
-  }, [mode]);
 
   useEffect(() => {
     if (open) {
       setName("");
       setMode("html");
-      setWidth("1280");
-      setHeight("800");
+      setWidth("");
+      setHeight("");
     }
   }, [open]);
 
