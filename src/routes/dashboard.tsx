@@ -5,8 +5,16 @@ import { PreviewPanel } from "@/components/octek/PreviewPanel";
 import { ChatPanel } from "@/components/octek/ChatPanel";
 import { NewAppModal } from "@/components/octek/NewAppModal";
 import { DropOverlay } from "@/components/octek/DropOverlay";
+import { VerifyKeyModal } from "@/components/octek/VerifyKeyModal";
 import { ToastProvider, useToast } from "@/components/octek/ToastProvider";
 import { api, fileToBase64, type AppItem } from "@/lib/api";
+
+const DEMO_API_KEY = "AIzaSyA_wVvnlQiPMK2pBwVaEAuKmbxrHvcWDg8";
+const DEMO_PROVIDER = "Google Gemini (demo)";
+const FREE_PROMPT_LIMIT = 2;
+const LS_PROMPT_COUNT = "octek-prompt-count";
+const LS_USER_KEY = "octek-user-verified-key";
+const LS_USER_PROVIDER = "octek-user-verified-provider";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
@@ -27,38 +35,68 @@ function Dashboard() {
   const [apps, setApps] = useState<AppItem[]>([]);
   const [loadingApps, setLoadingApps] = useState(true);
   const [selected, setSelected] = useState<AppItem | null>(null);
-  const [apiKey, setApiKey] = useState("");
-  const [verifiedKey, setVerifiedKey] = useState<string | null>(null);
-  const [provider, setProvider] = useState<string | null>(null);
+
+  // Pre-filled demo state
+  const [apiKey, setApiKey] = useState(DEMO_API_KEY);
+  const [verifiedKey, setVerifiedKey] = useState<string | null>(DEMO_API_KEY);
+  const [provider, setProvider] = useState<string | null>(DEMO_PROVIDER);
+
+  // User-supplied verified key (persists; unlocks unlimited)
+  const [userVerifiedKey, setUserVerifiedKey] = useState<string | null>(null);
+  const [promptCount, setPromptCount] = useState(0);
+
   const [reloadToken, setReloadToken] = useState(0);
   const [modalOpen, setModalOpen] = useState(false);
+  const [verifyOpen, setVerifyOpen] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const dragCounter = useRef(0);
 
-  const loadApps = useCallback(async (autoSelectId?: string) => {
-    setLoadingApps(true);
+  // Hydrate persisted state
+  useEffect(() => {
     try {
-      const res = await api.getApps();
-      const list = Array.isArray(res) ? res : [];
-      setApps(list);
-      if (autoSelectId) {
-        const found = list.find((a) => a.app_id === autoSelectId);
-        if (found) setSelected(found);
+      const savedKey = localStorage.getItem(LS_USER_KEY);
+      const savedProv = localStorage.getItem(LS_USER_PROVIDER);
+      const savedCount = parseInt(localStorage.getItem(LS_PROMPT_COUNT) ?? "0", 10);
+      if (savedKey) {
+        setUserVerifiedKey(savedKey);
+        setApiKey(savedKey);
+        setVerifiedKey(savedKey);
+        setProvider(savedProv ?? "Verified");
       }
-    } catch (e: any) {
-      toast.push({ kind: "error", title: "Failed to load apps", message: e?.message });
-    } finally {
-      setLoadingApps(false);
-    }
-  }, [toast]);
+      if (!Number.isNaN(savedCount)) setPromptCount(savedCount);
+    } catch {}
+  }, []);
+
+  const locked = !userVerifiedKey && promptCount >= FREE_PROMPT_LIMIT;
+
+  const loadApps = useCallback(
+    async (autoSelectId?: string) => {
+      setLoadingApps(true);
+      try {
+        const res = await api.getApps();
+        const list = Array.isArray(res) ? res : [];
+        setApps(list);
+        if (autoSelectId) {
+          const found = list.find((a) => a.app_id === autoSelectId);
+          if (found) setSelected(found);
+        }
+      } catch (e: any) {
+        toast.push({ kind: "error", title: "Failed to load apps", message: e?.message });
+      } finally {
+        setLoadingApps(false);
+      }
+    },
+    [toast],
+  );
 
   useEffect(() => {
     loadApps();
   }, [loadApps]);
 
-  // Global drag & drop
+  // Global drag & drop (disabled when locked)
   useEffect(() => {
     const onDragEnter = (e: DragEvent) => {
+      if (locked) return;
       if (!e.dataTransfer?.types?.includes("Files")) return;
       dragCounter.current++;
       setDragOver(true);
@@ -75,6 +113,7 @@ function Dashboard() {
       e.preventDefault();
       dragCounter.current = 0;
       setDragOver(false);
+      if (locked) return;
       const files = e.dataTransfer?.files;
       if (!files || files.length === 0) return;
       try {
@@ -101,7 +140,32 @@ function Dashboard() {
       window.removeEventListener("dragover", onDragOver);
       window.removeEventListener("drop", onDrop);
     };
-  }, [toast]);
+  }, [toast, locked]);
+
+  const handlePromptSent = useCallback(() => {
+    if (userVerifiedKey) return; // unlimited
+    setPromptCount((c) => {
+      const next = c + 1;
+      try {
+        localStorage.setItem(LS_PROMPT_COUNT, String(next));
+      } catch {}
+      return next;
+    });
+  }, [userVerifiedKey]);
+
+  const handleUserVerified = useCallback(
+    (key: string, prov: string) => {
+      setUserVerifiedKey(key);
+      setApiKey(key);
+      setVerifiedKey(key);
+      setProvider(prov);
+      try {
+        localStorage.setItem(LS_USER_KEY, key);
+        localStorage.setItem(LS_USER_PROVIDER, prov);
+      } catch {}
+    },
+    [],
+  );
 
   return (
     <div className="flex h-screen w-screen overflow-hidden">
@@ -111,38 +175,64 @@ function Dashboard() {
         selectedId={selected?.app_id ?? null}
         onSelect={setSelected}
         onNewApp={() => {
-          if (!verifiedKey) {
-            toast.push({
-              kind: "warning",
-              title: "Verify your API key first",
-              message: "You need a verified key to create new apps.",
-            });
+          if (locked) {
+            setVerifyOpen(true);
             return;
           }
           setModalOpen(true);
         }}
-        canCreate={!!verifiedKey}
+        canCreate={!locked}
+        locked={locked}
       />
       <PreviewPanel
         app={selected}
         apiKey={apiKey}
         setApiKey={setApiKey}
         verifiedKey={verifiedKey}
-        setVerifiedKey={setVerifiedKey}
+        setVerifiedKey={(k) => {
+          setVerifiedKey(k);
+          if (k && k !== DEMO_API_KEY) {
+            // Treat manual verification via the inline bar as user-verified too
+            setUserVerifiedKey(k);
+            try {
+              localStorage.setItem(LS_USER_KEY, k);
+            } catch {}
+          }
+        }}
         provider={provider}
-        setProvider={setProvider}
+        setProvider={(p) => {
+          setProvider(p);
+          if (p && userVerifiedKey) {
+            try {
+              localStorage.setItem(LS_USER_PROVIDER, p);
+            } catch {}
+          }
+        }}
         reloadToken={reloadToken}
       />
       <ChatPanel
         app={selected}
         verifiedKey={verifiedKey}
-        onAfterSend={() => setReloadToken((t) => t + 1)}
+        onAfterSend={() => {
+          setReloadToken((t) => t + 1);
+          handlePromptSent();
+        }}
+        locked={locked}
+        promptCount={promptCount}
+        promptLimit={FREE_PROMPT_LIMIT}
+        userVerified={!!userVerifiedKey}
+        onVerifyClick={() => setVerifyOpen(true)}
       />
 
       <NewAppModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         onCreated={(id) => loadApps(id)}
+      />
+      <VerifyKeyModal
+        open={verifyOpen}
+        onClose={() => setVerifyOpen(false)}
+        onVerified={handleUserVerified}
       />
       <DropOverlay visible={dragOver} />
     </div>

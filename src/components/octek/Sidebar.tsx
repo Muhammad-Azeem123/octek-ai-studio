@@ -11,9 +11,10 @@ interface Props {
   onSelect: (a: AppItem) => void;
   onNewApp: () => void;
   canCreate: boolean;
+  locked?: boolean;
 }
 
-export function Sidebar({ apps, loading, selectedId, onSelect, onNewApp, canCreate }: Props) {
+export function Sidebar({ apps, loading, selectedId, onSelect, onNewApp, canCreate, locked }: Props) {
   const [query, setQuery] = useState("");
   const sortedApps = [...apps].sort((a, b) => {
     const ad = (a as any).createdAt ? new Date((a as any).createdAt).getTime() : (a as any).id ?? 0;
@@ -49,7 +50,9 @@ export function Sidebar({ apps, loading, selectedId, onSelect, onNewApp, canCrea
         </button>
         {!canCreate && (
           <p className="mt-2 text-[10px] text-[var(--text-muted)] leading-snug text-center">
-            Verify your API key to create new apps
+            {locked
+              ? "Free demo limit reached — verify your API key to unlock"
+              : "Verify your API key to create new apps"}
           </p>
         )}
       </div>

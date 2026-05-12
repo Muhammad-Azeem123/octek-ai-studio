@@ -8,10 +8,12 @@ import {
   Loader2,
   FileText,
   Image as ImageIcon,
+  Lock,
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { api, fileToBase64, normalizeConvo, type AppItem, type ConvoMessage } from "@/lib/api";
 import { useToast } from "./ToastProvider";
+import { LockedOverlay } from "./LockedOverlay";
 
 const FRAMEWORKS = [
   { value: "claude-code", label: "claude-code" },
@@ -33,6 +35,11 @@ interface Props {
   app: AppItem | null;
   verifiedKey: string | null;
   onAfterSend: () => void;
+  locked?: boolean;
+  promptCount?: number;
+  promptLimit?: number;
+  userVerified?: boolean;
+  onVerifyClick?: () => void;
 }
 
 interface AttachmentDraft {
@@ -42,7 +49,16 @@ interface AttachmentDraft {
   error?: string;
 }
 
-export function ChatPanel({ app, verifiedKey, onAfterSend }: Props) {
+export function ChatPanel({
+  app,
+  verifiedKey,
+  onAfterSend,
+  locked = false,
+  promptCount = 0,
+  promptLimit = 2,
+  userVerified = false,
+  onVerifyClick,
+}: Props) {
   const [framework, setFramework] = useState(FRAMEWORKS[0].value);
   const [model, setModel] = useState(MODELS[0]);
   const [messages, setMessages] = useState<ConvoMessage[]>([]);
@@ -122,6 +138,10 @@ export function ChatPanel({ app, verifiedKey, onAfterSend }: Props) {
   }
 
   async function send() {
+    if (locked) {
+      onVerifyClick?.();
+      return;
+    }
     if (!app) {
       toast.push({ kind: "warning", title: "Select an app first" });
       return;
@@ -164,19 +184,43 @@ export function ChatPanel({ app, verifiedKey, onAfterSend }: Props) {
     }
   }
 
+  const remaining = Math.max(0, promptLimit - promptCount);
+
   return (
     <aside
-      className="flex flex-col bg-[var(--bg-secondary)] border-l border-[var(--border)] shrink-0"
+      className="relative flex flex-col bg-[var(--bg-secondary)] border-l border-[var(--border)] shrink-0"
       style={{ width: "var(--chat-width)" }}
     >
       {/* Header */}
       <div className="px-4 py-3 border-b border-[var(--border)] flex items-center gap-2">
         <MessageSquare size={16} className="text-[var(--accent)]" />
         <div className="font-semibold text-sm truncate">{app?.name ?? "No app selected"}</div>
+        {!userVerified && (
+          <div
+            className={`ml-auto text-[10px] font-mono px-2 py-0.5 rounded-full border ${
+              locked
+                ? "bg-[var(--danger)]/10 border-[var(--danger)]/40 text-[var(--danger)]"
+                : "bg-[var(--accent)]/10 border-[var(--accent)]/40 text-[var(--accent)]"
+            }`}
+            title="Free demo prompts"
+          >
+            {locked ? (
+              <span className="inline-flex items-center gap-1">
+                <Lock size={9} /> Locked
+              </span>
+            ) : (
+              <>FREE {remaining}/{promptLimit}</>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Dropdowns */}
-      <div className="px-3 py-2.5 border-b border-[var(--border)] grid grid-cols-2 gap-2">
+      <div
+        className={`px-3 py-2.5 border-b border-[var(--border)] grid grid-cols-2 gap-2 transition-opacity ${
+          locked ? "opacity-50 pointer-events-none" : ""
+        }`}
+      >
         <Select value={framework} onChange={setFramework} options={FRAMEWORKS.map((f) => ({ value: f.value, label: f.label }))} />
         <Select value={model} onChange={setModel} options={MODELS.map((m) => ({ value: m, label: m }))} />
       </div>
@@ -261,32 +305,44 @@ export function ChatPanel({ app, verifiedKey, onAfterSend }: Props) {
       )}
 
       {/* Input */}
-      <div className="p-3 border-t border-[var(--border)]">
-        <div className="bg-[var(--bg-tertiary)] border border-[var(--border)] focus-within:border-[var(--accent)]/60 rounded-[var(--radius)] transition-colors">
+      <div className="relative p-3 border-t border-[var(--border)]">
+        <div
+          className={`bg-[var(--bg-tertiary)] border border-[var(--border)] focus-within:border-[var(--accent)]/60 rounded-[var(--radius)] transition-all ${
+            locked ? "opacity-40 blur-[1px] pointer-events-none select-none" : ""
+          }`}
+        >
           <textarea
             ref={taRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={onKeyDown}
-            placeholder="Describe what you want to build…"
+            placeholder={locked ? "Verify your API key to continue…" : "Describe what you want to build…"}
             rows={1}
-            className="w-full bg-transparent resize-none outline-none px-3 py-2.5 text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] scrollbar-thin"
+            disabled={locked}
+            className="w-full bg-transparent resize-none outline-none px-3 py-2.5 text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] scrollbar-thin disabled:cursor-not-allowed"
           />
           <div className="flex items-center gap-1 px-2 pb-2">
-            <label className="w-7 h-7 grid place-items-center rounded-md hover:bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] cursor-pointer">
+            <label
+              className={`w-7 h-7 grid place-items-center rounded-md hover:bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] ${
+                locked ? "cursor-not-allowed opacity-50" : "cursor-pointer"
+              }`}
+            >
               <Paperclip size={14} />
               <input
                 type="file"
                 multiple
                 accept="image/*,.pdf,.csv,.json,.txt,.md"
                 className="hidden"
+                disabled={locked}
                 onChange={(e) => e.target.files && handleFiles(e.target.files)}
               />
             </label>
             <button
-              onClick={() => setPlanning((p) => !p)}
+              type="button"
+              onClick={() => !locked && setPlanning((p) => !p)}
+              disabled={locked}
               title="Planning mode"
-              className={`h-7 px-2 rounded-md text-[11px] font-mono flex items-center gap-1 transition-colors ${
+              className={`h-7 px-2 rounded-md text-[11px] font-mono flex items-center gap-1 transition-colors disabled:cursor-not-allowed ${
                 planning
                   ? "bg-[var(--accent)]/15 text-[var(--accent)] border border-[var(--accent)]/40"
                   : "text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)]"
@@ -298,7 +354,7 @@ export function ChatPanel({ app, verifiedKey, onAfterSend }: Props) {
             <div className="flex-1" />
             <button
               onClick={send}
-              disabled={sending || !input.trim()}
+              disabled={sending || locked || !input.trim()}
               className="h-8 px-3 rounded-md bg-[var(--accent)] hover:bg-[var(--accent-dim)] disabled:opacity-40 disabled:cursor-not-allowed text-[#06140f] flex items-center gap-1.5 transition-colors"
             >
               {sending ? <Loader2 size={13} className="animate-spin" /> : <Send size={13} />}
@@ -306,6 +362,8 @@ export function ChatPanel({ app, verifiedKey, onAfterSend }: Props) {
           </div>
         </div>
       </div>
+
+      {locked && <LockedOverlay onVerify={() => onVerifyClick?.()} />}
     </aside>
   );
 }
