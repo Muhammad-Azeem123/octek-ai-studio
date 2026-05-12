@@ -110,7 +110,18 @@ function Dashboard() {
         loading={loadingApps}
         selectedId={selected?.app_id ?? null}
         onSelect={setSelected}
-        onNewApp={() => setModalOpen(true)}
+        onNewApp={() => {
+          if (!verifiedKey) {
+            toast.push({
+              kind: "warning",
+              title: "Verify your API key first",
+              message: "You need a verified key to create new apps.",
+            });
+            return;
+          }
+          setModalOpen(true);
+        }}
+        canCreate={!!verifiedKey}
       />
       <PreviewPanel
         app={selected}
