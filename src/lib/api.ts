@@ -39,10 +39,14 @@ export const api = {
   getApps: () => postJson<AppItem[]>(`${BASE}/get_apps_99dj348`, {}),
 
   detectKey: (api_key: string) =>
-    postJson<{ provider?: string; valid?: boolean; success?: boolean; error?: string }>(
-      `${BASE}/detect_key`,
-      { api_key },
-    ),
+    postJson<{
+      provider?: string;
+      detectedProvider?: string;
+      message?: string;
+      valid?: boolean;
+      success?: boolean;
+      error?: string;
+    }>(`${BASE}/detect_key`, { api_key }),
 
   getConvo: (app_id: string) =>
     postJson<unknown>(`${BASE}/get_convo_99dj348`, { app_id }),
