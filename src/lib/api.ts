@@ -90,8 +90,30 @@ export function extractUserMessage(raw: string): string {
 }
 
 // Normalize convo response into ConvoMessage[]
+// New shape: [{ messages: [{ human: string, ai: string }, ...] }]
+// Falls back to older shapes (array of {role, content}, etc.)
 export function normalizeConvo(data: unknown): ConvoMessage[] {
   if (!data) return [];
+
+  // New shape: array whose first item has .messages with {human, ai} pairs
+  if (Array.isArray(data) && data.length > 0 && data[0] && typeof data[0] === "object") {
+    const first = data[0] as any;
+    if (Array.isArray(first.messages) && first.messages.length > 0 && ("human" in first.messages[0] || "ai" in first.messages[0])) {
+      const out: ConvoMessage[] = [];
+      for (const m of first.messages) {
+        if (m?.human) {
+          const raw = String(m.human);
+          out.push({ role: "human", content: extractUserMessage(raw), raw });
+        }
+        if (m?.ai) {
+          const raw = String(m.ai);
+          out.push({ role: "ai", content: raw, raw });
+        }
+      }
+      return out;
+    }
+  }
+
   let arr: any[] = [];
   if (Array.isArray(data)) arr = data;
   else if (typeof data === "object" && data !== null) {
