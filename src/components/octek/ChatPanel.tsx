@@ -222,7 +222,17 @@ export function ChatPanel({
         }`}
       >
         <Select value={framework} onChange={setFramework} options={FRAMEWORKS.map((f) => ({ value: f.value, label: f.label }))} />
-        <Select value={model} onChange={setModel} options={MODELS.map((m) => ({ value: m, label: m }))} />
+        <Select
+          value={model}
+          onChange={setModel}
+          disabled={!userVerified}
+          title={!userVerified ? "Verify your API key to switch models" : undefined}
+          options={
+            userVerified
+              ? MODELS.map((m) => ({ value: m, label: m }))
+              : [{ value: MODELS[0], label: `${MODELS[0]} (free)` }]
+          }
+        />
       </div>
 
       {/* Messages */}
