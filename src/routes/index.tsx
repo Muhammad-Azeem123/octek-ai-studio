@@ -1,7 +1,8 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, Monitor, Sparkles, Key, Zap } from "lucide-react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { ArrowRight, Monitor, Sparkles, Key, Zap, LayoutDashboard } from "lucide-react";
 import { Logo } from "@/components/octek/Logo";
 import { ThemeToggle } from "@/components/octek/ThemeToggle";
+import { isAuthenticated } from "@/lib/auth";
 
 export const Route = createFileRoute("/")({
   head: () => ({
