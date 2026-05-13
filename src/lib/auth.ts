@@ -1,5 +1,6 @@
 // Temporary client-side auth. Replace with real backend later.
 const LS_AUTH = "octek-auth-session";
+const LS_USERS = "octek-auth-users";
 
 export const ALLOWED_EMAIL = "mianazeem5605@gmail.com";
 export const ALLOWED_PASSWORD = "123123123";
