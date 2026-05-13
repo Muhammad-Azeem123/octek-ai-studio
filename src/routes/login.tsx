@@ -140,7 +140,17 @@ function LoginPage() {
               </button>
             </form>
 
-            <div className="mt-6 text-center text-[11px] text-[var(--text-muted)]">
+            <div className="mt-6 text-center text-[12.5px] text-[var(--text-secondary)]">
+              Don't have an account?{" "}
+              <Link
+                to="/signup"
+                className="text-[var(--accent)] font-semibold hover:underline"
+              >
+                Sign up
+              </Link>
+            </div>
+
+            <div className="mt-3 text-center text-[11px] text-[var(--text-muted)]">
               By continuing, you agree to our Terms & Privacy Policy.
             </div>
           </div>
