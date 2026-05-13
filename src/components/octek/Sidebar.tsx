@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, FileText, Loader2, Lock, Search, X } from "lucide-react";
+import { Plus, FileText, Loader2, Lock, Search, X, ArrowLeft, LogOut } from "lucide-react";
 import { Logo } from "./Logo";
 import { ThemeToggle } from "./ThemeToggle";
 import type { AppItem } from "@/lib/api";
@@ -12,9 +12,11 @@ interface Props {
   onNewApp: () => void;
   canCreate: boolean;
   locked?: boolean;
+  onBackHome?: () => void;
+  onLogout?: () => void;
 }
 
-export function Sidebar({ apps, loading, selectedId, onSelect, onNewApp, canCreate, locked }: Props) {
+export function Sidebar({ apps, loading, selectedId, onSelect, onNewApp, canCreate, locked, onBackHome, onLogout }: Props) {
   const [query, setQuery] = useState("");
   const sortedApps = [...apps].sort((a, b) => {
     const ad = (a as any).createdAt ? new Date((a as any).createdAt).getTime() : (a as any).id ?? 0;
