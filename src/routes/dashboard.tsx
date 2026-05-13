@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Sidebar } from "@/components/octek/Sidebar";
 import { PreviewPanel } from "@/components/octek/PreviewPanel";
@@ -8,6 +8,7 @@ import { DropOverlay } from "@/components/octek/DropOverlay";
 import { VerifyKeyModal } from "@/components/octek/VerifyKeyModal";
 import { ToastProvider, useToast } from "@/components/octek/ToastProvider";
 import { api, fileToBase64, type AppItem } from "@/lib/api";
+import { isAuthenticated, logout as doLogout } from "@/lib/auth";
 
 const DEMO_API_KEY = "AIzaSyA_wVvnlQiPMK2pBwVaEAuKmbxrHvcWDg8";
 const DEMO_PROVIDER = "Google Gemini (demo)";
