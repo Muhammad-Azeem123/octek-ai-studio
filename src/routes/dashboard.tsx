@@ -24,6 +24,11 @@ export const Route = createFileRoute("/dashboard")({
       { name: "description", content: "Build AI-powered web apps live with the OCTEK AI Builder." },
     ],
   }),
+  beforeLoad: () => {
+    if (typeof window !== "undefined" && !isAuthenticated()) {
+      throw redirect({ to: "/login" });
+    }
+  },
   component: () => (
     <ToastProvider>
       <Dashboard />
