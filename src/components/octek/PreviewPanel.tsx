@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Eye, EyeOff, Github, ExternalLink, RefreshCw, Monitor, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Github, ExternalLink, RefreshCw, Monitor, Loader2, Lock, ShieldCheck } from "lucide-react";
 import { api, cacheBust, previewUrl } from "@/lib/api";
 import { useToast } from "./ToastProvider";
 import type { AppItem } from "@/lib/api";
@@ -13,6 +13,9 @@ interface Props {
   provider: string | null;
   setProvider: (p: string | null) => void;
   reloadToken: number;
+  locked?: boolean;
+  userVerified?: boolean;
+  onVerifyClick?: () => void;
 }
 
 export function PreviewPanel({
@@ -24,6 +27,9 @@ export function PreviewPanel({
   provider,
   setProvider,
   reloadToken,
+  locked = false,
+  userVerified = false,
+  onVerifyClick,
 }: Props) {
   const [show, setShow] = useState(false);
   const [verifying, setVerifying] = useState(false);
