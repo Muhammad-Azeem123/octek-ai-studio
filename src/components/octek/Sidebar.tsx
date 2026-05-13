@@ -150,6 +150,28 @@ export function Sidebar({ apps, loading, selectedId, onSelect, onNewApp, canCrea
           );
         })}
       </div>
+      <div className="px-[14px] py-2 border-t border-[var(--border)] flex items-center gap-1">
+        {onBackHome && (
+          <button
+            onClick={onBackHome}
+            title="Back to Home"
+            className="flex-1 h-8 flex items-center justify-center gap-1.5 text-[11px] font-medium rounded-md text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)] transition-colors"
+          >
+            <ArrowLeft size={12} />
+            Home
+          </button>
+        )}
+        {onLogout && (
+          <button
+            onClick={onLogout}
+            title="Log out"
+            className="flex-1 h-8 flex items-center justify-center gap-1.5 text-[11px] font-medium rounded-md text-[var(--text-secondary)] hover:bg-[var(--danger)]/10 hover:text-[var(--danger)] transition-colors"
+          >
+            <LogOut size={12} />
+            Logout
+          </button>
+        )}
+      </div>
       <div className="px-[18px] py-3 border-t border-[var(--border)] flex items-center justify-between">
         <span className="text-[10px] tracking-[0.15em] text-[var(--text-muted)] font-semibold uppercase">
           Theme
