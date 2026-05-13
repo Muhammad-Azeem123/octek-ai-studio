@@ -24,10 +24,17 @@ export function isAuthenticated(): boolean {
 }
 
 export function login(email: string, password: string): AuthSession | null {
-  if (email.trim().toLowerCase() !== ALLOWED_EMAIL || password !== ALLOWED_PASSWORD) {
-    return null;
+  const e = email.trim().toLowerCase();
+  let valid = e === ALLOWED_EMAIL && password === ALLOWED_PASSWORD;
+  if (!valid) {
+    try {
+      const raw = localStorage.getItem(LS_USERS);
+      const users = raw ? (JSON.parse(raw) as { email: string; password: string }[]) : [];
+      valid = users.some((u) => u.email === e && u.password === password);
+    } catch {}
   }
-  const session: AuthSession = { email: ALLOWED_EMAIL, loggedInAt: Date.now() };
+  if (!valid) return null;
+  const session: AuthSession = { email: e, loggedInAt: Date.now() };
   try {
     localStorage.setItem(LS_AUTH, JSON.stringify(session));
   } catch {}
