@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Sidebar } from "@/components/octek/Sidebar";
 import { PreviewPanel } from "@/components/octek/PreviewPanel";
@@ -8,6 +8,7 @@ import { DropOverlay } from "@/components/octek/DropOverlay";
 import { VerifyKeyModal } from "@/components/octek/VerifyKeyModal";
 import { ToastProvider, useToast } from "@/components/octek/ToastProvider";
 import { api, fileToBase64, type AppItem } from "@/lib/api";
+import { isAuthenticated, logout as doLogout } from "@/lib/auth";
 
 const DEMO_API_KEY = "AIzaSyA_wVvnlQiPMK2pBwVaEAuKmbxrHvcWDg8";
 const DEMO_PROVIDER = "Google Gemini (demo)";
@@ -23,6 +24,11 @@ export const Route = createFileRoute("/dashboard")({
       { name: "description", content: "Build AI-powered web apps live with the OCTEK AI Builder." },
     ],
   }),
+  beforeLoad: () => {
+    if (typeof window !== "undefined" && !isAuthenticated()) {
+      throw redirect({ to: "/login" });
+    }
+  },
   component: () => (
     <ToastProvider>
       <Dashboard />
@@ -32,6 +38,16 @@ export const Route = createFileRoute("/dashboard")({
 
 function Dashboard() {
   const toast = useToast();
+  const navigate = useNavigate();
+
+  const handleLogout = useCallback(() => {
+    doLogout();
+    navigate({ to: "/login" });
+  }, [navigate]);
+  const handleBackHome = useCallback(() => {
+    navigate({ to: "/" });
+  }, [navigate]);
+
   const [apps, setApps] = useState<AppItem[]>([]);
   const [loadingApps, setLoadingApps] = useState(true);
   const [selected, setSelected] = useState<AppItem | null>(null);
@@ -183,12 +199,17 @@ function Dashboard() {
         }}
         canCreate={!locked}
         locked={locked}
+        onBackHome={handleBackHome}
+        onLogout={handleLogout}
       />
       <PreviewPanel
         app={selected}
         apiKey={apiKey}
         setApiKey={setApiKey}
         verifiedKey={verifiedKey}
+        locked={locked}
+        userVerified={!!userVerifiedKey}
+        onVerifyClick={() => setVerifyOpen(true)}
         setVerifiedKey={(k) => {
           setVerifiedKey(k);
           if (k && k !== DEMO_API_KEY) {

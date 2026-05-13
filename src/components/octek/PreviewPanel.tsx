@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Eye, EyeOff, Github, ExternalLink, RefreshCw, Monitor, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Github, ExternalLink, RefreshCw, Monitor, Loader2, Lock, ShieldCheck } from "lucide-react";
 import { api, cacheBust, previewUrl } from "@/lib/api";
 import { useToast } from "./ToastProvider";
 import type { AppItem } from "@/lib/api";
@@ -13,6 +13,9 @@ interface Props {
   provider: string | null;
   setProvider: (p: string | null) => void;
   reloadToken: number;
+  locked?: boolean;
+  userVerified?: boolean;
+  onVerifyClick?: () => void;
 }
 
 export function PreviewPanel({
@@ -24,6 +27,9 @@ export function PreviewPanel({
   provider,
   setProvider,
   reloadToken,
+  locked = false,
+  userVerified = false,
+  onVerifyClick,
 }: Props) {
   const [show, setShow] = useState(false);
   const [verifying, setVerifying] = useState(false);
@@ -78,47 +84,67 @@ export function PreviewPanel({
   return (
     <section className="flex-1 min-w-0 flex flex-col bg-[var(--bg-primary)]">
       {/* API KEY BAR */}
-      <div className="h-11 flex items-center gap-2 px-3 border-b border-[var(--border)] bg-[var(--bg-secondary)]">
-        <span className="text-[10px] tracking-[0.18em] font-semibold text-[var(--text-muted)] shrink-0">
-          API KEY
-        </span>
-        <div className="flex-1 relative">
-          <input
-            type={show ? "text" : "password"}
-            value={apiKey}
-            onChange={(e) => setApiKey(e.target.value)}
-            placeholder="Paste your provider API key"
-            className="w-full h-7 px-3 pr-8 rounded-[var(--radius)] bg-[var(--bg-tertiary)] border border-[var(--border)] focus:border-[var(--accent)] outline-none text-xs font-mono text-[var(--text-primary)] placeholder:text-[var(--text-muted)] transition-colors"
-          />
-          <button
-            onClick={() => setShow((s) => !s)}
-            className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-            aria-label="Toggle visibility"
-          >
-            {show ? <EyeOff size={14} /> : <Eye size={14} />}
-          </button>
-        </div>
-        <button
-          onClick={verify}
-          disabled={verifying}
-          className="h-7 px-3 rounded-[var(--radius)] bg-[var(--accent)] hover:bg-[var(--accent-dim)] disabled:opacity-50 text-[#06140f] text-xs font-bold flex items-center gap-1.5 transition-colors"
-        >
-          {verifying && <Loader2 size={12} className="animate-spin" />}
-          Verify
-        </button>
-        {verifyState !== "idle" && (
-          <div className="flex items-center gap-1.5 text-xs">
-            <span
-              className={`w-2 h-2 rounded-full ${
-                verifyState === "ok" ? "bg-[var(--accent)] shadow-[0_0_8px_var(--accent)]" : "bg-[var(--danger)]"
-              }`}
-            />
-            <span className="text-[var(--text-secondary)]">
-              {verifyState === "ok" ? provider ?? "Verified" : "Failed"}
+      {locked && !userVerified ? (
+        <div className="h-11 flex items-center gap-2 px-3 border-b border-[var(--border)] bg-[var(--bg-secondary)]">
+          <span className="text-[10px] tracking-[0.18em] font-semibold text-[var(--text-muted)] shrink-0 inline-flex items-center gap-1">
+            <Lock size={10} /> API KEY
+          </span>
+          <div className="flex-1 h-7 rounded-[var(--radius)] bg-[var(--bg-tertiary)] border border-dashed border-[var(--border)] flex items-center px-3 opacity-60 select-none">
+            <span className="text-[11px] font-mono text-[var(--text-muted)] truncate">
+              Free demo limit reached — verify your own key to unlock
             </span>
           </div>
-        )}
-      </div>
+          <button
+            onClick={() => onVerifyClick?.()}
+            className="h-7 px-3 rounded-[var(--radius)] bg-[var(--accent)] hover:bg-[var(--accent-dim)] text-[#06140f] text-xs font-bold flex items-center gap-1.5 transition-colors glow-accent"
+          >
+            <ShieldCheck size={12} />
+            Unlock
+          </button>
+        </div>
+      ) : (
+        <div className="h-11 flex items-center gap-2 px-3 border-b border-[var(--border)] bg-[var(--bg-secondary)]">
+          <span className="text-[10px] tracking-[0.18em] font-semibold text-[var(--text-muted)] shrink-0">
+            API KEY
+          </span>
+          <div className="flex-1 relative">
+            <input
+              type={show ? "text" : "password"}
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              placeholder="Paste your provider API key"
+              className="w-full h-7 px-3 pr-8 rounded-[var(--radius)] bg-[var(--bg-tertiary)] border border-[var(--border)] focus:border-[var(--accent)] outline-none text-xs font-mono text-[var(--text-primary)] placeholder:text-[var(--text-muted)] transition-colors"
+            />
+            <button
+              onClick={() => setShow((s) => !s)}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+              aria-label="Toggle visibility"
+            >
+              {show ? <EyeOff size={14} /> : <Eye size={14} />}
+            </button>
+          </div>
+          <button
+            onClick={verify}
+            disabled={verifying}
+            className="h-7 px-3 rounded-[var(--radius)] bg-[var(--accent)] hover:bg-[var(--accent-dim)] disabled:opacity-50 text-[#06140f] text-xs font-bold flex items-center gap-1.5 transition-colors"
+          >
+            {verifying && <Loader2 size={12} className="animate-spin" />}
+            Verify
+          </button>
+          {verifyState !== "idle" && (
+            <div className="flex items-center gap-1.5 text-xs">
+              <span
+                className={`w-2 h-2 rounded-full ${
+                  verifyState === "ok" ? "bg-[var(--accent)] shadow-[0_0_8px_var(--accent)]" : "bg-[var(--danger)]"
+                }`}
+              />
+              <span className="text-[var(--text-secondary)]">
+                {verifyState === "ok" ? provider ?? "Verified" : "Failed"}
+              </span>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* URL BAR */}
       <div className="h-11 flex items-center gap-2 px-3 border-b border-[var(--border)] bg-[var(--bg-secondary)]">

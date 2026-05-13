@@ -1,7 +1,8 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, Monitor, Sparkles, Key, Zap } from "lucide-react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { ArrowRight, Monitor, Sparkles, Key, Zap, LayoutDashboard } from "lucide-react";
 import { Logo } from "@/components/octek/Logo";
 import { ThemeToggle } from "@/components/octek/ThemeToggle";
+import { isAuthenticated } from "@/lib/auth";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -18,6 +19,11 @@ export const Route = createFileRoute("/")({
 });
 
 function Landing() {
+  const navigate = useNavigate();
+  const goDashboard = () => {
+    if (isAuthenticated()) navigate({ to: "/dashboard" });
+    else navigate({ to: "/login" });
+  };
   return (
     <div className="h-screen w-screen overflow-y-auto scrollbar-thin bg-[var(--bg-primary)] flex flex-col">
       {/* Header */}
@@ -33,18 +39,13 @@ function Landing() {
         </div>
         <div className="flex items-center gap-3">
           <ThemeToggle />
-          <Link
-            to="/dashboard"
-            className="text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+          <button
+            onClick={goDashboard}
+            className="bg-[var(--accent)] hover:bg-[var(--accent-dim)] text-[#06140f] font-bold text-sm px-4 py-2 rounded-md glow-accent transition-colors flex items-center gap-1.5"
           >
-            Sign in
-          </Link>
-          <Link
-            to="/dashboard"
-            className="bg-[var(--accent)] hover:bg-[var(--accent-dim)] text-[#06140f] font-bold text-sm px-4 py-2 rounded-md glow-accent transition-colors"
-          >
-            Start Building Free
-          </Link>
+            <LayoutDashboard size={14} strokeWidth={2.5} />
+            Dashboard
+          </button>
         </div>
       </header>
 

@@ -61,6 +61,10 @@ export function ChatPanel({
 }: Props) {
   const [framework, setFramework] = useState(FRAMEWORKS[0].value);
   const [model, setModel] = useState(MODELS[0]);
+  // Free plan: pin to default model
+  useEffect(() => {
+    if (!userVerified && model !== "gemini-2.5-flash") setModel("gemini-2.5-flash");
+  }, [userVerified, model]);
   const [messages, setMessages] = useState<ConvoMessage[]>([]);
   const [loadingConvo, setLoadingConvo] = useState(false);
   const [input, setInput] = useState("");
@@ -222,7 +226,19 @@ export function ChatPanel({
         }`}
       >
         <Select value={framework} onChange={setFramework} options={FRAMEWORKS.map((f) => ({ value: f.value, label: f.label }))} />
-        <Select value={model} onChange={setModel} options={MODELS.map((m) => ({ value: m, label: m }))} />
+        {userVerified ? (
+          <Select value={model} onChange={setModel} options={MODELS.map((m) => ({ value: m, label: m }))} />
+        ) : (
+          <div
+            title="Upgrade by verifying your API key to switch models"
+            className="relative w-full bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-md text-[11px] font-mono text-[var(--text-secondary)] px-2.5 py-1.5 pr-12 cursor-not-allowed opacity-70 flex items-center"
+          >
+            <span className="truncate">gemini-2.5-flash</span>
+            <span className="absolute right-1.5 top-1/2 -translate-y-1/2 inline-flex items-center gap-1 text-[9px] font-semibold tracking-wider text-[var(--accent)] bg-[var(--accent)]/10 border border-[var(--accent)]/30 rounded-sm px-1.5 py-0.5">
+              <Lock size={8} /> FREE
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Messages */}
