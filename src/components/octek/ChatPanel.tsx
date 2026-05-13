@@ -61,6 +61,10 @@ export function ChatPanel({
 }: Props) {
   const [framework, setFramework] = useState(FRAMEWORKS[0].value);
   const [model, setModel] = useState(MODELS[0]);
+  // Free plan: pin to default model
+  useEffect(() => {
+    if (!userVerified && model !== "gemini-2.5-flash") setModel("gemini-2.5-flash");
+  }, [userVerified, model]);
   const [messages, setMessages] = useState<ConvoMessage[]>([]);
   const [loadingConvo, setLoadingConvo] = useState(false);
   const [input, setInput] = useState("");
