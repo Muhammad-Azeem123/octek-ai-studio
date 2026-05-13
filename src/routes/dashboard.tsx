@@ -38,6 +38,16 @@ export const Route = createFileRoute("/dashboard")({
 
 function Dashboard() {
   const toast = useToast();
+  const navigate = useNavigate();
+
+  const handleLogout = useCallback(() => {
+    doLogout();
+    navigate({ to: "/login" });
+  }, [navigate]);
+  const handleBackHome = useCallback(() => {
+    navigate({ to: "/" });
+  }, [navigate]);
+
   const [apps, setApps] = useState<AppItem[]>([]);
   const [loadingApps, setLoadingApps] = useState(true);
   const [selected, setSelected] = useState<AppItem | null>(null);
