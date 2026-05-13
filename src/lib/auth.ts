@@ -39,3 +39,48 @@ export function logout(): void {
     localStorage.removeItem(LS_AUTH);
   } catch {}
 }
+
+const LS_USERS = "octek-auth-users";
+
+interface StoredUser {
+  email: string;
+  password: string;
+  name?: string;
+  createdAt: number;
+}
+
+function readUsers(): StoredUser[] {
+  try {
+    const raw = localStorage.getItem(LS_USERS);
+    return raw ? (JSON.parse(raw) as StoredUser[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeUsers(users: StoredUser[]) {
+  try {
+    localStorage.setItem(LS_USERS, JSON.stringify(users));
+  } catch {}
+}
+
+export function signup(
+  name: string,
+  email: string,
+  password: string,
+): { ok: true; session: AuthSession } | { ok: false; error: string } {
+  const e = email.trim().toLowerCase();
+  if (!e || !password) return { ok: false, error: "Email and password are required." };
+  if (password.length < 6) return { ok: false, error: "Password must be at least 6 characters." };
+  const users = readUsers();
+  if (users.some((u) => u.email === e) || e === ALLOWED_EMAIL) {
+    return { ok: false, error: "An account with this email already exists." };
+  }
+  users.push({ email: e, password, name: name.trim(), createdAt: Date.now() });
+  writeUsers(users);
+  const session: AuthSession = { email: e, loggedInAt: Date.now() };
+  try {
+    localStorage.setItem(LS_AUTH, JSON.stringify(session));
+  } catch {}
+  return { ok: true, session };
+}
