@@ -48,7 +48,6 @@ export function logout(): void {
   } catch {}
 }
 
-const LS_USERS = "octek-auth-users";
 
 interface StoredUser {
   email: string;
