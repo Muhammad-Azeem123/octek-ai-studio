@@ -1,22 +1,26 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Eye, EyeOff, Loader2, Mail, Lock, ArrowRight, AlertCircle } from "lucide-react";
+import { Eye, EyeOff, Loader2, Mail, Lock, User, ArrowRight, AlertCircle } from "lucide-react";
 import { Logo } from "@/components/octek/Logo";
 import { ThemeToggle } from "@/components/octek/ThemeToggle";
-import { isAuthenticated, login } from "@/lib/auth";
+import { isAuthenticated, signup } from "@/lib/auth";
 
-export const Route = createFileRoute("/login")({
+export const Route = createFileRoute("/signup")({
   head: () => ({
     meta: [
-      { title: "Sign in — OCTEK AI Builder" },
-      { name: "description", content: "Sign in to your OCTEK AI Builder account." },
+      { title: "Create your account — OCTEK AI Builder" },
+      {
+        name: "description",
+        content: "Create a free OCTEK AI Builder account and start building AI-powered web apps.",
+      },
     ],
   }),
-  component: LoginPage,
+  component: SignupPage,
 });
 
-function LoginPage() {
+function SignupPage() {
   const navigate = useNavigate();
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [show, setShow] = useState(false);
@@ -32,10 +36,10 @@ function LoginPage() {
     setError(null);
     setSubmitting(true);
     await new Promise((r) => setTimeout(r, 450));
-    const session = login(email, password);
+    const res = signup(name, email, password);
     setSubmitting(false);
-    if (!session) {
-      setError("Invalid email or password. Please try again.");
+    if (!res.ok) {
+      setError(res.error);
       return;
     }
     navigate({ to: "/dashboard" });
@@ -43,7 +47,6 @@ function LoginPage() {
 
   return (
     <div className="min-h-screen w-full bg-[var(--bg-primary)] text-[var(--text-primary)] relative overflow-hidden flex flex-col">
-      {/* Animated background accents */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -left-40 w-[520px] h-[520px] rounded-full bg-[var(--accent)]/15 blur-[140px] animate-pulse" />
         <div
@@ -53,9 +56,8 @@ function LoginPage() {
         <div className="absolute inset-0 opacity-[0.04] [background-image:linear-gradient(var(--text-primary)_1px,transparent_1px),linear-gradient(90deg,var(--text-primary)_1px,transparent_1px)] [background-size:48px_48px]" />
       </div>
 
-      {/* Header */}
       <header className="relative z-10 flex items-center justify-between px-6 py-4">
-        <Link to="/" className="flex items-center gap-2.5 group">
+        <Link to="/" className="flex items-center gap-2.5">
           <Logo size={26} />
           <div>
             <div className="font-bold leading-tight text-sm">OCTEK AI</div>
@@ -72,11 +74,11 @@ function LoginPage() {
           <div className="bg-[var(--bg-card)]/80 backdrop-blur-xl border border-[var(--border)] rounded-2xl p-7 shadow-2xl glow-accent">
             <div className="text-center mb-7">
               <div className="w-12 h-12 rounded-xl bg-[var(--accent)]/15 text-[var(--accent)] grid place-items-center mx-auto mb-4 glow-accent">
-                <Lock size={20} />
+                <User size={20} />
               </div>
-              <h1 className="text-2xl font-bold tracking-tight">Welcome back</h1>
+              <h1 className="text-2xl font-bold tracking-tight">Create your account</h1>
               <p className="text-sm text-[var(--text-secondary)] mt-1.5">
-                Sign in to continue building with OCTEK AI
+                Start building AI-powered web apps in seconds
               </p>
             </div>
 
@@ -89,13 +91,21 @@ function LoginPage() {
 
             <form onSubmit={onSubmit} className="space-y-4">
               <Field
+                icon={<User size={14} />}
+                label="Name"
+                type="text"
+                value={name}
+                onChange={setName}
+                placeholder="Your name"
+                autoFocus
+              />
+              <Field
                 icon={<Mail size={14} />}
                 label="Email"
                 type="email"
                 value={email}
                 onChange={setEmail}
                 placeholder="you@example.com"
-                autoFocus
               />
               <div>
                 <label className="block text-[11px] font-semibold tracking-wider text-[var(--text-muted)] mb-1.5 uppercase">
@@ -109,7 +119,7 @@ function LoginPage() {
                     type={show ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
+                    placeholder="At least 6 characters"
                     className="w-full bg-[var(--bg-tertiary)] border border-[var(--border)] focus:border-[var(--accent)] outline-none rounded-md text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] pl-9 pr-10 py-2.5 transition-colors"
                   />
                   <button
@@ -130,23 +140,20 @@ function LoginPage() {
               >
                 {submitting ? (
                   <>
-                    <Loader2 size={14} className="animate-spin" /> Signing in…
+                    <Loader2 size={14} className="animate-spin" /> Creating account…
                   </>
                 ) : (
                   <>
-                    Sign in <ArrowRight size={14} />
+                    Create account <ArrowRight size={14} />
                   </>
                 )}
               </button>
             </form>
 
             <div className="mt-6 text-center text-[12.5px] text-[var(--text-secondary)]">
-              Don't have an account?{" "}
-              <Link
-                to="/signup"
-                className="text-[var(--accent)] font-semibold hover:underline"
-              >
-                Sign up
+              Already have an account?{" "}
+              <Link to="/login" className="text-[var(--accent)] font-semibold hover:underline">
+                Sign in
               </Link>
             </div>
 
