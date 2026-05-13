@@ -199,12 +199,17 @@ function Dashboard() {
         }}
         canCreate={!locked}
         locked={locked}
+        onBackHome={handleBackHome}
+        onLogout={handleLogout}
       />
       <PreviewPanel
         app={selected}
         apiKey={apiKey}
         setApiKey={setApiKey}
         verifiedKey={verifiedKey}
+        locked={locked}
+        userVerified={!!userVerifiedKey}
+        onVerifyClick={() => setVerifyOpen(true)}
         setVerifiedKey={(k) => {
           setVerifiedKey(k);
           if (k && k !== DEMO_API_KEY) {
