@@ -8,14 +8,19 @@ import { DropOverlay } from "@/components/octek/DropOverlay";
 import { VerifyKeyModal } from "@/components/octek/VerifyKeyModal";
 import { ToastProvider, useToast } from "@/components/octek/ToastProvider";
 import { api, fileToBase64, type AppItem } from "@/lib/api";
+import {
+  FREE_PROMPT_LIMIT,
+  FREE_TRIAL_DEMO_API_KEY,
+  getUserVerifiedProvider,
+  incrementPromptCount,
+  isOwnVerifiedApiKey,
+  loadTrialState,
+  setUserVerifiedKey as persistUserVerifiedKey,
+} from "@/lib/freeTrial";
 import { getCurrentUserId, isLoggedIn, logoutUser } from "../services/authService";
 
-const DEMO_API_KEY = "AIzaSyA_wVvnlQiPMK2pBwVaEAuKmbxrHvcWDg8";
+const DEMO_API_KEY = FREE_TRIAL_DEMO_API_KEY;
 const DEMO_PROVIDER = "Google Gemini (demo)";
-const FREE_PROMPT_LIMIT = 2;
-const LS_PROMPT_COUNT = "octek-prompt-count";
-const LS_USER_KEY = "octek-user-verified-key";
-const LS_USER_PROVIDER = "octek-user-verified-provider";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
@@ -40,6 +45,8 @@ function Dashboard() {
   const toast = useToast();
   const navigate = useNavigate();
   const userId = typeof window !== "undefined" ? getCurrentUserId() : null;
+  const initialTrial =
+    typeof window !== "undefined" ? loadTrialState(getCurrentUserId()) : { ownVerifiedKey: null, promptCount: 0 };
 
   useEffect(() => {
     if (!isLoggedIn()) window.location.href = "/login";
@@ -61,9 +68,9 @@ function Dashboard() {
   const [verifiedKey, setVerifiedKey] = useState<string | null>(DEMO_API_KEY);
   const [provider, setProvider] = useState<string | null>(DEMO_PROVIDER);
 
-  // User-supplied verified key (persists; unlocks unlimited)
-  const [userVerifiedKey, setUserVerifiedKey] = useState<string | null>(null);
-  const [promptCount, setPromptCount] = useState(0);
+  // User's own verified key (not the shared demo key)
+  const [userVerifiedKey, setUserVerifiedKey] = useState<string | null>(initialTrial.ownVerifiedKey);
+  const [promptCount, setPromptCount] = useState(initialTrial.promptCount);
 
   const [reloadToken, setReloadToken] = useState(0);
   const [modalOpen, setModalOpen] = useState(false);
@@ -71,21 +78,24 @@ function Dashboard() {
   const [dragOver, setDragOver] = useState(false);
   const dragCounter = useRef(0);
 
-  // Hydrate persisted state
+  // Re-sync if userId becomes available after mount (e.g. client navigation)
   useEffect(() => {
-    try {
-      const savedKey = localStorage.getItem(LS_USER_KEY);
-      const savedProv = localStorage.getItem(LS_USER_PROVIDER);
-      const savedCount = parseInt(localStorage.getItem(LS_PROMPT_COUNT) ?? "0", 10);
-      if (savedKey) {
-        setUserVerifiedKey(savedKey);
-        setApiKey(savedKey);
-        setVerifiedKey(savedKey);
-        setProvider(savedProv ?? "Verified");
-      }
-      if (!Number.isNaN(savedCount)) setPromptCount(savedCount);
-    } catch {}
-  }, []);
+    if (!userId) return;
+    const { ownVerifiedKey, promptCount: savedCount } = loadTrialState(userId);
+    if (ownVerifiedKey) {
+      const savedProv = getUserVerifiedProvider(userId);
+      setUserVerifiedKey(ownVerifiedKey);
+      setApiKey(ownVerifiedKey);
+      setVerifiedKey(ownVerifiedKey);
+      setProvider(savedProv ?? "Verified");
+    } else {
+      setUserVerifiedKey(null);
+      setApiKey(DEMO_API_KEY);
+      setVerifiedKey(DEMO_API_KEY);
+      setProvider(DEMO_PROVIDER);
+    }
+    setPromptCount(savedCount);
+  }, [userId]);
 
   const locked = !userVerifiedKey && promptCount >= FREE_PROMPT_LIMIT;
 
@@ -163,28 +173,21 @@ function Dashboard() {
   }, [toast, locked]);
 
   const handlePromptSent = useCallback(() => {
-    if (userVerifiedKey) return; // unlimited
-    setPromptCount((c) => {
-      const next = c + 1;
-      try {
-        localStorage.setItem(LS_PROMPT_COUNT, String(next));
-      } catch {}
-      return next;
-    });
-  }, [userVerifiedKey]);
+    if (!userId || userVerifiedKey) return;
+    const next = incrementPromptCount(userId);
+    setPromptCount(next);
+  }, [userId, userVerifiedKey]);
 
   const handleUserVerified = useCallback(
     (key: string, prov: string) => {
+      if (!userId || !isOwnVerifiedApiKey(key)) return;
       setUserVerifiedKey(key);
       setApiKey(key);
       setVerifiedKey(key);
       setProvider(prov);
-      try {
-        localStorage.setItem(LS_USER_KEY, key);
-        localStorage.setItem(LS_USER_PROVIDER, prov);
-      } catch {}
+      persistUserVerifiedKey(userId, key, prov);
     },
-    [],
+    [userId],
   );
 
   return (
@@ -217,21 +220,16 @@ function Dashboard() {
         onVerifyClick={() => setVerifyOpen(true)}
         setVerifiedKey={(k) => {
           setVerifiedKey(k);
-          if (k && k !== DEMO_API_KEY) {
-            // Treat manual verification via the inline bar as user-verified too
+          if (k && isOwnVerifiedApiKey(k) && userId) {
             setUserVerifiedKey(k);
-            try {
-              localStorage.setItem(LS_USER_KEY, k);
-            } catch {}
+            persistUserVerifiedKey(userId, k, provider ?? "Verified");
           }
         }}
         provider={provider}
         setProvider={(p) => {
           setProvider(p);
-          if (p && userVerifiedKey) {
-            try {
-              localStorage.setItem(LS_USER_PROVIDER, p);
-            } catch {}
+          if (p && userVerifiedKey && userId) {
+            persistUserVerifiedKey(userId, userVerifiedKey, p);
           }
         }}
         reloadToken={reloadToken}

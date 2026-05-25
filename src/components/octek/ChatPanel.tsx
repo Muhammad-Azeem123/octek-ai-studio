@@ -81,12 +81,25 @@ export function ChatPanel({
       setMessages([]);
       return;
     }
+    let cancelled = false;
+    const appId = app.app_id;
     setLoadingConvo(true);
     api
-      .getConvo(app.app_id)
-      .then((d) => setMessages(normalizeConvo(d)))
-      .catch((e) => toast.push({ kind: "error", title: "Failed to load chat", message: e?.message }))
-      .finally(() => setLoadingConvo(false));
+      .getConvo(appId)
+      .then((d) => {
+        if (!cancelled) setMessages(normalizeConvo(d));
+      })
+      .catch((e) => {
+        if (!cancelled) {
+          toast.push({ kind: "error", title: "Failed to load chat", message: e?.message });
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingConvo(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [app?.app_id]);
 
   // Autoscroll

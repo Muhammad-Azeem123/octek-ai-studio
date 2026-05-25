@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Eye, EyeOff, Loader2, Mail, Lock, User, ArrowRight, AlertCircle } from "lucide-react";
 import { Logo } from "@/components/octek/Logo";
 import { ThemeToggle } from "@/components/octek/ThemeToggle";
+import { grantFreeTrial } from "@/lib/freeTrial";
 import { isLoggedIn, loginUser, signupUser } from "../services/authService";
 
 export const Route = createFileRoute("/signup")({
@@ -38,17 +39,16 @@ function SignupPage() {
       setError(null);
       setSubmitting(true);
 
-      const submittedEmail = email.trim();
-      const submittedPassword = password;
-
-      const data = await signupUser(firstName, lastName, submittedEmail, submittedPassword);
+      const data = await signupUser(firstName, lastName, email, password);
       console.log("Signed up, uuid:", data.uuid);
 
-      await loginUser(submittedEmail, submittedPassword);
+      const { uuid } = await loginUser(email, password);
+      grantFreeTrial(uuid || data.uuid);
       navigate({ to: "/dashboard" });
     } catch (err) {
       console.error("Signup error:", err);
-      setError(err instanceof Error ? err.message : "Signup failed");
+      setError("Signup failed");
+      alert("Signup failed");
     } finally {
       setSubmitting(false);
     }
@@ -88,6 +88,9 @@ function SignupPage() {
               <h1 className="text-2xl font-bold tracking-tight">Create your account</h1>
               <p className="text-sm text-[var(--text-secondary)] mt-1.5">
                 Start building AI-powered web apps in seconds
+              </p>
+              <p className="text-xs text-[var(--accent)] mt-2 font-medium">
+                Includes 2 free prompts — no API key required
               </p>
             </div>
 

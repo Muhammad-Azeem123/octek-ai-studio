@@ -9,6 +9,8 @@ type ServerEntry = {
 
 const AUTH_PROXY_PREFIX = "/auth-api";
 const DEFAULT_AUTH_API_BASE = "https://auth.mennuai.com";
+const WEBHOOK_PROXY_PREFIX = "/webhook-api";
+const DEFAULT_N8N_WEBHOOK_BASE = "https://n8n.octek.org/webhook";
 
 let serverEntryPromise: Promise<ServerEntry> | undefined;
 
@@ -101,6 +103,12 @@ function normalizeAuthApiBase(value?: string): string {
   return trimmed.replace(/\/$/, "");
 }
 
+function normalizeWebhookBase(value?: string): string {
+  const trimmed = String(value ?? "").trim();
+  if (!trimmed || trimmed.startsWith("/")) return DEFAULT_N8N_WEBHOOK_BASE;
+  return trimmed.replace(/\/$/, "");
+}
+
 function authCorsHeaders(request: Request): Headers {
   const origin = request.headers.get("origin") ?? new URL(request.url).origin;
   return new Headers({
@@ -130,7 +138,9 @@ async function proxyAuthRequest(request: Request, env: unknown): Promise<Respons
   const contentType = request.headers.get("content-type");
   if (contentType) headers.set("Content-Type", contentType);
 
-  const authorization = normalizeAuthorizationHeader(
+  // Prefer Wrangler / deploy env. In `vite dev`, worker `process.env` often lacks non-VITE_ vars
+  // from `.env`, while the browser already sends these on `/auth-api/*` (see authService.js).
+  const authorizationFromEnv = normalizeAuthorizationHeader(
     envValue(runtimeEnv, [
       "AUTHORIZATION_HEADER",
       "AUTHORIZATION",
@@ -140,7 +150,7 @@ async function proxyAuthRequest(request: Request, env: unknown): Promise<Respons
       "VITE_AUTH_TOKEN",
     ]),
   );
-  const clientSecret = envValue(runtimeEnv, [
+  const clientSecretFromEnv = envValue(runtimeEnv, [
     "CLIENT_SECRET",
     "CLIENT_HEADER_SECRET",
     "Client-Secret",
@@ -149,8 +159,47 @@ async function proxyAuthRequest(request: Request, env: unknown): Promise<Respons
     "VITE_Client-Secret",
   ]);
 
+  const authorization =
+    authorizationFromEnv ?? normalizeAuthorizationHeader(request.headers.get("authorization") ?? undefined);
+  const clientSecret = clientSecretFromEnv || request.headers.get("client-secret")?.trim();
+
   if (authorization) headers.set("Authorization", authorization);
   if (clientSecret) headers.set("Client-Secret", clientSecret);
+
+  const hasBody = !["GET", "HEAD"].includes(request.method);
+  const response = await fetch(upstreamUrl, {
+    method: request.method,
+    headers,
+    body: hasBody ? await request.arrayBuffer() : undefined,
+    redirect: "manual",
+  });
+
+  const responseHeaders = new Headers(response.headers);
+  const corsHeaders = authCorsHeaders(request);
+  corsHeaders.forEach((value, key) => responseHeaders.set(key, value));
+
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers: responseHeaders,
+  });
+}
+
+async function proxyWebhookRequest(request: Request, env: unknown): Promise<Response> {
+  const url = new URL(request.url);
+  const runtimeEnv = getRuntimeEnv(env);
+  const webhookBase = normalizeWebhookBase(
+    envValue(runtimeEnv, ["N8N_WEBHOOK_BASE", "VITE_N8N_WEBHOOK_BASE"]),
+  );
+
+  if (request.method === "OPTIONS") {
+    return new Response(null, { status: 204, headers: authCorsHeaders(request) });
+  }
+
+  const upstreamUrl = `${webhookBase}${url.pathname.slice(WEBHOOK_PROXY_PREFIX.length)}${url.search}`;
+  const headers = new Headers({ Accept: "application/json" });
+  const contentType = request.headers.get("content-type");
+  if (contentType) headers.set("Content-Type", contentType);
 
   const hasBody = !["GET", "HEAD"].includes(request.method);
   const response = await fetch(upstreamUrl, {
@@ -177,6 +226,9 @@ export default {
       const pathname = new URL(request.url).pathname;
       if (pathname === AUTH_PROXY_PREFIX || pathname.startsWith(`${AUTH_PROXY_PREFIX}/`)) {
         return await proxyAuthRequest(request, env);
+      }
+      if (pathname === WEBHOOK_PROXY_PREFIX || pathname.startsWith(`${WEBHOOK_PROXY_PREFIX}/`)) {
+        return await proxyWebhookRequest(request, env);
       }
 
       const handler = await getServerEntry();
