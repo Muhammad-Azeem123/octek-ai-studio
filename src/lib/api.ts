@@ -1,4 +1,5 @@
 // API integration for OCTEK AI Builder webhooks
+<<<<<<< HEAD
 const DEFAULT_WEBHOOK_BASE = "https://n8n.octek.org/webhook";
 const WEBHOOK_PROXY_PREFIX = "/webhook-api";
 
@@ -16,6 +17,9 @@ function resolveWebhookBase(): string {
 }
 
 const BASE = resolveWebhookBase();
+=======
+const BASE = "https://n8n.octek.org/webhook";
+>>>>>>> 35fb837ca2af6a571858b394bd3705b6cf78063e
 
 export interface AppItem {
   app_id: string;
@@ -36,10 +40,13 @@ export interface UploadedFilePayload {
   base64: string;
 }
 
+<<<<<<< HEAD
 function withUserId<T extends Record<string, unknown>>(body: T, user_id?: string | null): T & { user_id?: string } {
   return user_id ? { ...body, user_id } : body;
 }
 
+=======
+>>>>>>> 35fb837ca2af6a571858b394bd3705b6cf78063e
 async function postJson<T>(url: string, body: unknown): Promise<T> {
   const res = await fetch(url, {
     method: "POST",
@@ -55,6 +62,7 @@ async function postJson<T>(url: string, body: unknown): Promise<T> {
   }
 }
 
+<<<<<<< HEAD
 async function getJson<T>(url: string): Promise<T> {
   const res = await fetch(url, {
     method: "GET",
@@ -112,6 +120,12 @@ export const api = {
     ),
 
   detectKey: (api_key: string, user_id?: string | null) =>
+=======
+export const api = {
+  getApps: () => postJson<AppItem[]>(`${BASE}/get_apps_99dj348`, {}),
+
+  detectKey: (api_key: string) =>
+>>>>>>> 35fb837ca2af6a571858b394bd3705b6cf78063e
     postJson<{
       provider?: string;
       detectedProvider?: string;
@@ -119,7 +133,11 @@ export const api = {
       valid?: boolean;
       success?: boolean;
       error?: string;
+<<<<<<< HEAD
     }>(`${BASE}/detect_key`, withUserId({ api_key }, user_id)),
+=======
+    }>(`${BASE}/detect_key`, { api_key }),
+>>>>>>> 35fb837ca2af6a571858b394bd3705b6cf78063e
 
   getConvo: (app_id: string) =>
     postJson<unknown>(`${BASE}/get_convo_99dj348`, { app_id }),
@@ -143,6 +161,7 @@ export const api = {
     payload,
   ),
 
+<<<<<<< HEAD
   createRepo: ({
     user_id,
     ...payload
@@ -157,6 +176,10 @@ export const api = {
       `${BASE}/create_repo_99dj348`,
       withUserId(payload, user_id),
     ),
+=======
+  createRepo: (payload: { name: string; mode: string; width: string; height: string }) =>
+    postJson<{ app_id?: string; success?: boolean }>(`${BASE}/create_repo_99dj348`, payload),
+>>>>>>> 35fb837ca2af6a571858b394bd3705b6cf78063e
 };
 
 export function previewUrl(appId: string) {
@@ -174,6 +197,7 @@ export function extractUserMessage(raw: string): string {
   return (m ? m[1] : raw).trim();
 }
 
+<<<<<<< HEAD
 function parseMaybeJson(value: unknown): unknown {
   if (typeof value !== "string") return value;
   const trimmed = value.trim();
@@ -318,11 +342,55 @@ function normalizeRoleContentList(items: unknown[]): ConvoMessage[] {
         role: isHuman ? "human" : "ai",
         content: isHuman ? extractUserMessage(raw) : raw,
         raw,
+=======
+// Normalize convo response into ConvoMessage[]
+// New shape: [{ messages: [{ human: string, ai: string }, ...] }]
+// Falls back to older shapes (array of {role, content}, etc.)
+export function normalizeConvo(data: unknown): ConvoMessage[] {
+  if (!data) return [];
+
+  // New shape: array whose first item has .messages with {human, ai} pairs
+  if (Array.isArray(data) && data.length > 0 && data[0] && typeof data[0] === "object") {
+    const first = data[0] as any;
+    if (Array.isArray(first.messages) && first.messages.length > 0 && ("human" in first.messages[0] || "ai" in first.messages[0])) {
+      const out: ConvoMessage[] = [];
+      for (const m of first.messages) {
+        if (m?.human) {
+          const raw = String(m.human);
+          out.push({ role: "human", content: extractUserMessage(raw), raw });
+        }
+        if (m?.ai) {
+          const raw = String(m.ai);
+          out.push({ role: "ai", content: raw, raw });
+        }
+      }
+      return out;
+    }
+  }
+
+  let arr: any[] = [];
+  if (Array.isArray(data)) arr = data;
+  else if (typeof data === "object" && data !== null) {
+    const d = data as any;
+    arr = d.messages ?? d.conversation ?? d.data ?? [];
+  }
+  return arr
+    .map((m): ConvoMessage | null => {
+      if (!m) return null;
+      const role = (m.role ?? m.type ?? (m.human ? "human" : "ai")) as string;
+      const content = m.content ?? m.text ?? m.message ?? m.output ?? "";
+      const isHuman = /human|user/i.test(role);
+      return {
+        role: isHuman ? "human" : "ai",
+        content: isHuman ? extractUserMessage(String(content)) : String(content),
+        raw: String(content),
+>>>>>>> 35fb837ca2af6a571858b394bd3705b6cf78063e
       };
     })
     .filter(Boolean) as ConvoMessage[];
 }
 
+<<<<<<< HEAD
 // Normalize convo response into ConvoMessage[]
 // Supports: [{ messages: [{ human, ai }] }], { messages: [...] }, postgres rows, n8n { json }, JSON strings
 export function normalizeConvo(data: unknown): ConvoMessage[] {
@@ -343,6 +411,8 @@ export function normalizeConvo(data: unknown): ConvoMessage[] {
   return [];
 }
 
+=======
+>>>>>>> 35fb837ca2af6a571858b394bd3705b6cf78063e
 export async function fileToBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const r = new FileReader();

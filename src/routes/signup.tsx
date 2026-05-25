@@ -3,8 +3,12 @@ import { useEffect, useState } from "react";
 import { Eye, EyeOff, Loader2, Mail, Lock, User, ArrowRight, AlertCircle } from "lucide-react";
 import { Logo } from "@/components/octek/Logo";
 import { ThemeToggle } from "@/components/octek/ThemeToggle";
+<<<<<<< HEAD
 import { grantFreeTrial } from "@/lib/freeTrial";
 import { isLoggedIn, loginUser, signupUser } from "../services/authService";
+=======
+import { isAuthenticated, signup } from "@/lib/auth";
+>>>>>>> 35fb837ca2af6a571858b394bd3705b6cf78063e
 
 export const Route = createFileRoute("/signup")({
   head: () => ({
@@ -21,8 +25,12 @@ export const Route = createFileRoute("/signup")({
 
 function SignupPage() {
   const navigate = useNavigate();
+<<<<<<< HEAD
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+=======
+  const [name, setName] = useState("");
+>>>>>>> 35fb837ca2af6a571858b394bd3705b6cf78063e
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [show, setShow] = useState(false);
@@ -30,11 +38,16 @@ function SignupPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+<<<<<<< HEAD
     if (isLoggedIn()) navigate({ to: "/dashboard" });
+=======
+    if (isAuthenticated()) navigate({ to: "/dashboard" });
+>>>>>>> 35fb837ca2af6a571858b394bd3705b6cf78063e
   }, [navigate]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+<<<<<<< HEAD
     try {
       setError(null);
       setSubmitting(true);
@@ -52,6 +65,18 @@ function SignupPage() {
     } finally {
       setSubmitting(false);
     }
+=======
+    setError(null);
+    setSubmitting(true);
+    await new Promise((r) => setTimeout(r, 450));
+    const res = signup(name, email, password);
+    setSubmitting(false);
+    if (!res.ok) {
+      setError(res.error);
+      return;
+    }
+    navigate({ to: "/dashboard" });
+>>>>>>> 35fb837ca2af6a571858b394bd3705b6cf78063e
   }
 
   return (
@@ -89,9 +114,12 @@ function SignupPage() {
               <p className="text-sm text-[var(--text-secondary)] mt-1.5">
                 Start building AI-powered web apps in seconds
               </p>
+<<<<<<< HEAD
               <p className="text-xs text-[var(--accent)] mt-2 font-medium">
                 Includes 2 free prompts — no API key required
               </p>
+=======
+>>>>>>> 35fb837ca2af6a571858b394bd3705b6cf78063e
             </div>
 
             {error && (
@@ -102,6 +130,7 @@ function SignupPage() {
             )}
 
             <form onSubmit={onSubmit} className="space-y-4">
+<<<<<<< HEAD
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field
                   icon={<User size={14} />}
@@ -121,6 +150,17 @@ function SignupPage() {
                   placeholder="Last name"
                 />
               </div>
+=======
+              <Field
+                icon={<User size={14} />}
+                label="Name"
+                type="text"
+                value={name}
+                onChange={setName}
+                placeholder="Your name"
+                autoFocus
+              />
+>>>>>>> 35fb837ca2af6a571858b394bd3705b6cf78063e
               <Field
                 icon={<Mail size={14} />}
                 label="Email"

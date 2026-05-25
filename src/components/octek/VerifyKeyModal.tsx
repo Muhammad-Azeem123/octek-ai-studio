@@ -5,12 +5,19 @@ import { useToast } from "./ToastProvider";
 
 interface Props {
   open: boolean;
+<<<<<<< HEAD
   userId?: string | null;
+=======
+>>>>>>> 35fb837ca2af6a571858b394bd3705b6cf78063e
   onClose: () => void;
   onVerified: (key: string, provider: string) => void;
 }
 
+<<<<<<< HEAD
 export function VerifyKeyModal({ open, userId, onClose, onVerified }: Props) {
+=======
+export function VerifyKeyModal({ open, onClose, onVerified }: Props) {
+>>>>>>> 35fb837ca2af6a571858b394bd3705b6cf78063e
   const [key, setKey] = useState("");
   const [show, setShow] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -34,7 +41,11 @@ export function VerifyKeyModal({ open, userId, onClose, onVerified }: Props) {
     }
     setLoading(true);
     try {
+<<<<<<< HEAD
       const res = await api.detectKey(trimmed, userId);
+=======
+      const res = await api.detectKey(trimmed);
+>>>>>>> 35fb837ca2af6a571858b394bd3705b6cf78063e
       const detected = res.detectedProvider ?? res.provider;
       const ok = (res.valid !== false && res.success !== false && !res.error) || !!detected;
       if (!ok) {

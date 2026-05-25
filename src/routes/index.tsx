@@ -1,7 +1,15 @@
+<<<<<<< HEAD
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, Monitor, Sparkles, Key, Zap } from "lucide-react";
 import { Logo } from "@/components/octek/Logo";
 import { ThemeToggle } from "@/components/octek/ThemeToggle";
+=======
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { ArrowRight, Monitor, Sparkles, Key, Zap, LayoutDashboard } from "lucide-react";
+import { Logo } from "@/components/octek/Logo";
+import { ThemeToggle } from "@/components/octek/ThemeToggle";
+import { isAuthenticated } from "@/lib/auth";
+>>>>>>> 35fb837ca2af6a571858b394bd3705b6cf78063e
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -18,6 +26,14 @@ export const Route = createFileRoute("/")({
 });
 
 function Landing() {
+<<<<<<< HEAD
+=======
+  const navigate = useNavigate();
+  const goDashboard = () => {
+    if (isAuthenticated()) navigate({ to: "/dashboard" });
+    else navigate({ to: "/login" });
+  };
+>>>>>>> 35fb837ca2af6a571858b394bd3705b6cf78063e
   return (
     <div className="h-screen w-screen overflow-y-auto scrollbar-thin bg-[var(--bg-primary)] flex flex-col">
       {/* Header */}
@@ -33,6 +49,7 @@ function Landing() {
         </div>
         <div className="flex items-center gap-3">
           <ThemeToggle />
+<<<<<<< HEAD
           <Link
             to="/login"
             className="border border-[var(--border)] bg-transparent hover:bg-[var(--bg-tertiary)] text-[var(--text-primary)] font-semibold text-sm px-4 py-2 rounded-md transition-colors"
@@ -45,6 +62,15 @@ function Landing() {
           >
             Sign Up
           </Link>
+=======
+          <button
+            onClick={goDashboard}
+            className="bg-[var(--accent)] hover:bg-[var(--accent-dim)] text-[#06140f] font-bold text-sm px-4 py-2 rounded-md glow-accent transition-colors flex items-center gap-1.5"
+          >
+            <LayoutDashboard size={14} strokeWidth={2.5} />
+            Dashboard
+          </button>
+>>>>>>> 35fb837ca2af6a571858b394bd3705b6cf78063e
         </div>
       </header>
 
@@ -104,6 +130,15 @@ function Landing() {
               our API key. Want to build more? Just bring your own API key — unlimited apps, no
               subscription.
             </p>
+<<<<<<< HEAD
+=======
+            <Link
+              to="/dashboard"
+              className="inline-flex items-center gap-2 mt-7 bg-[var(--accent)] hover:bg-[var(--accent-dim)] text-[#06140f] font-bold px-6 py-3 rounded-md glow-accent-strong"
+            >
+              Start Building Free <ArrowRight size={16} />
+            </Link>
+>>>>>>> 35fb837ca2af6a571858b394bd3705b6cf78063e
           </div>
         </section>
       </main>

@@ -3,7 +3,11 @@ import { useEffect, useState } from "react";
 import { Eye, EyeOff, Loader2, Mail, Lock, ArrowRight, AlertCircle } from "lucide-react";
 import { Logo } from "@/components/octek/Logo";
 import { ThemeToggle } from "@/components/octek/ThemeToggle";
+<<<<<<< HEAD
 import { isLoggedIn, loginUser } from "../services/authService";
+=======
+import { isAuthenticated, login } from "@/lib/auth";
+>>>>>>> 35fb837ca2af6a571858b394bd3705b6cf78063e
 
 export const Route = createFileRoute("/login")({
   head: () => ({
@@ -24,11 +28,16 @@ function LoginPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+<<<<<<< HEAD
     if (isLoggedIn()) navigate({ to: "/dashboard" });
+=======
+    if (isAuthenticated()) navigate({ to: "/dashboard" });
+>>>>>>> 35fb837ca2af6a571858b394bd3705b6cf78063e
   }, [navigate]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+<<<<<<< HEAD
     try {
       setError(null);
       setSubmitting(true);
@@ -46,6 +55,18 @@ function LoginPage() {
     } finally {
       setSubmitting(false);
     }
+=======
+    setError(null);
+    setSubmitting(true);
+    await new Promise((r) => setTimeout(r, 450));
+    const session = login(email, password);
+    setSubmitting(false);
+    if (!session) {
+      setError("Invalid email or password. Please try again.");
+      return;
+    }
+    navigate({ to: "/dashboard" });
+>>>>>>> 35fb837ca2af6a571858b394bd3705b6cf78063e
   }
 
   return (

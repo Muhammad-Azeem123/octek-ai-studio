@@ -111,7 +111,11 @@ export function Sidebar({ apps, loading, selectedId, onSelect, onNewApp, canCrea
         )}
         {!loading && apps.length === 0 && (
           <div className="px-3 py-6 text-xs text-[var(--text-muted)] text-center">
+<<<<<<< HEAD
             No app exists for this user. Click + New App to make one.
+=======
+            No apps yet. Click + New App to start.
+>>>>>>> 35fb837ca2af6a571858b394bd3705b6cf78063e
           </div>
         )}
         {!loading && apps.length > 0 && filteredApps.length === 0 && (
