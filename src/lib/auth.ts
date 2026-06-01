@@ -52,11 +52,8 @@ export function logout(): void {
 interface StoredUser {
   email: string;
   password: string;
-<<<<<<< HEAD
   firstName?: string;
   lastName?: string;
-=======
->>>>>>> 35fb837ca2af6a571858b394bd3705b6cf78063e
   name?: string;
   createdAt: number;
 }
@@ -77,7 +74,6 @@ function writeUsers(users: StoredUser[]) {
 }
 
 export function signup(
-<<<<<<< HEAD
   firstName: string,
   lastName: string,
   email: string,
@@ -89,20 +85,11 @@ export function signup(
   if (!first || !last || !e || !password) {
     return { ok: false, error: "First name, last name, email, and password are required." };
   }
-=======
-  name: string,
-  email: string,
-  password: string,
-): { ok: true; session: AuthSession } | { ok: false; error: string } {
-  const e = email.trim().toLowerCase();
-  if (!e || !password) return { ok: false, error: "Email and password are required." };
->>>>>>> 35fb837ca2af6a571858b394bd3705b6cf78063e
   if (password.length < 6) return { ok: false, error: "Password must be at least 6 characters." };
   const users = readUsers();
   if (users.some((u) => u.email === e) || e === ALLOWED_EMAIL) {
     return { ok: false, error: "An account with this email already exists." };
   }
-<<<<<<< HEAD
   users.push({
     email: e,
     password,
@@ -111,9 +98,6 @@ export function signup(
     name: `${first} ${last}`,
     createdAt: Date.now(),
   });
-=======
-  users.push({ email: e, password, name: name.trim(), createdAt: Date.now() });
->>>>>>> 35fb837ca2af6a571858b394bd3705b6cf78063e
   writeUsers(users);
   const session: AuthSession = { email: e, loggedInAt: Date.now() };
   try {

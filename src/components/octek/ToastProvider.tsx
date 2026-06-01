@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
-=======
-import { createContext, useCallback, useContext, useState, type ReactNode } from "react";
->>>>>>> 35fb837ca2af6a571858b394bd3705b6cf78063e
 import { CheckCircle2, AlertTriangle, Info, XCircle, X } from "lucide-react";
 
 export type ToastKind = "success" | "error" | "info" | "warning";
@@ -48,16 +44,10 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const remove = (id: string) => setToasts((arr) => arr.filter((x) => x.id !== id));
-<<<<<<< HEAD
   const value = useMemo(() => ({ push }), [push]);
 
   return (
     <Ctx.Provider value={value}>
-=======
-
-  return (
-    <Ctx.Provider value={{ push }}>
->>>>>>> 35fb837ca2af6a571858b394bd3705b6cf78063e
       {children}
       <div className="fixed top-4 right-4 z-[100] flex flex-col gap-2 w-[340px] pointer-events-none">
         {toasts.map((t) => {

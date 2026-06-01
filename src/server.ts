@@ -7,24 +7,17 @@ type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
 };
 
-<<<<<<< HEAD
 const AUTH_PROXY_PREFIX = "/auth-api";
 const DEFAULT_AUTH_API_BASE = "https://auth.mennuai.com";
 const WEBHOOK_PROXY_PREFIX = "/webhook-api";
 const DEFAULT_N8N_WEBHOOK_BASE = "https://n8n.octek.org/webhook";
 
-=======
->>>>>>> 35fb837ca2af6a571858b394bd3705b6cf78063e
 let serverEntryPromise: Promise<ServerEntry> | undefined;
 
 async function getServerEntry(): Promise<ServerEntry> {
   if (!serverEntryPromise) {
     serverEntryPromise = import("@tanstack/react-start/server-entry").then(
-<<<<<<< HEAD
       (m) => (m as { default?: ServerEntry }).default ?? (m as unknown as ServerEntry),
-=======
-      (m) => ((m as { default?: ServerEntry }).default ?? (m as unknown as ServerEntry)),
->>>>>>> 35fb837ca2af6a571858b394bd3705b6cf78063e
     );
   }
   return serverEntryPromise;
@@ -78,7 +71,6 @@ async function normalizeCatastrophicSsrResponse(response: Response): Promise<Res
   return brandedErrorResponse();
 }
 
-<<<<<<< HEAD
 function getRuntimeEnv(env: unknown): Record<string, string | undefined> {
   const processEnv =
     (globalThis as typeof globalThis & { process?: { env?: Record<string, string | undefined> } })
@@ -239,11 +231,6 @@ export default {
         return await proxyWebhookRequest(request, env);
       }
 
-=======
-export default {
-  async fetch(request: Request, env: unknown, ctx: unknown) {
-    try {
->>>>>>> 35fb837ca2af6a571858b394bd3705b6cf78063e
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
       return await normalizeCatastrophicSsrResponse(response);

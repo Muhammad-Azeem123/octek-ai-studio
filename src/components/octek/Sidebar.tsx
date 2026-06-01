@@ -105,17 +105,32 @@ export function Sidebar({ apps, loading, selectedId, onSelect, onNewApp, canCrea
 
       <div className="flex-1 overflow-y-auto scrollbar-thin px-2 pb-3">
         {loading && (
-          <div className="flex items-center justify-center py-8 text-[var(--text-muted)]">
-            <Loader2 size={16} className="animate-spin" />
+          <div className="flex flex-col items-center justify-center gap-2 py-10 text-[var(--text-muted)]">
+            <Loader2 size={18} className="animate-spin text-[var(--accent)]" />
+            <span className="text-[11px]">Loading your apps…</span>
           </div>
         )}
         {!loading && apps.length === 0 && (
-          <div className="px-3 py-6 text-xs text-[var(--text-muted)] text-center">
-<<<<<<< HEAD
-            No app exists for this user. Click + New App to make one.
-=======
-            No apps yet. Click + New App to start.
->>>>>>> 35fb837ca2af6a571858b394bd3705b6cf78063e
+          <div className="mx-1 my-3 rounded-lg border border-dashed border-[var(--border)] bg-[var(--bg-tertiary)]/40 px-4 py-8 text-center">
+            <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-[var(--accent)]/10 text-[var(--accent)]">
+              <FileText size={18} strokeWidth={1.75} />
+            </div>
+            <p className="text-[13px] font-medium text-[var(--text-primary)]">No apps yet</p>
+            <p className="mt-2 text-[11px] leading-relaxed text-[var(--text-muted)]">
+              You don&apos;t have any apps for this account. Tap the green{" "}
+              <span className="font-semibold text-[var(--accent)]">+ New App</span> button above to
+              create your first one.
+            </p>
+            {canCreate && (
+              <button
+                type="button"
+                onClick={onNewApp}
+                className="mt-4 inline-flex items-center justify-center gap-1.5 rounded-md bg-[var(--accent)] px-3 py-1.5 text-[11px] font-bold text-[#06140f] hover:bg-[var(--accent-dim)] transition-colors"
+              >
+                <Plus size={12} strokeWidth={3} />
+                Create your first app
+              </button>
+            )}
           </div>
         )}
         {!loading && apps.length > 0 && filteredApps.length === 0 && (

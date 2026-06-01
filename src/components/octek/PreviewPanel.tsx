@@ -6,10 +6,7 @@ import type { AppItem } from "@/lib/api";
 
 interface Props {
   app: AppItem | null;
-<<<<<<< HEAD
   userId?: string | null;
-=======
->>>>>>> 35fb837ca2af6a571858b394bd3705b6cf78063e
   apiKey: string;
   setApiKey: (k: string) => void;
   verifiedKey: string | null;
@@ -24,10 +21,7 @@ interface Props {
 
 export function PreviewPanel({
   app,
-<<<<<<< HEAD
   userId,
-=======
->>>>>>> 35fb837ca2af6a571858b394bd3705b6cf78063e
   apiKey,
   setApiKey,
   verifiedKey,
@@ -61,11 +55,7 @@ export function PreviewPanel({
     setVerifying(true);
     setVerifyState("idle");
     try {
-<<<<<<< HEAD
       const res = await api.detectKey(apiKey.trim(), userId);
-=======
-      const res = await api.detectKey(apiKey.trim());
->>>>>>> 35fb837ca2af6a571858b394bd3705b6cf78063e
       const detected = res.detectedProvider ?? res.provider;
       const ok = (res.valid !== false && res.success !== false && !res.error) || !!detected;
       if (ok) {

@@ -81,7 +81,6 @@ export function ChatPanel({
       setMessages([]);
       return;
     }
-<<<<<<< HEAD
     let cancelled = false;
     const appId = app.app_id;
     setLoadingConvo(true);
@@ -101,14 +100,6 @@ export function ChatPanel({
     return () => {
       cancelled = true;
     };
-=======
-    setLoadingConvo(true);
-    api
-      .getConvo(app.app_id)
-      .then((d) => setMessages(normalizeConvo(d)))
-      .catch((e) => toast.push({ kind: "error", title: "Failed to load chat", message: e?.message }))
-      .finally(() => setLoadingConvo(false));
->>>>>>> 35fb837ca2af6a571858b394bd3705b6cf78063e
   }, [app?.app_id]);
 
   // Autoscroll
@@ -191,11 +182,7 @@ export function ChatPanel({
         mode: app.app_mode,
         model,
         agent_framework: framework,
-<<<<<<< HEAD
         environment: "production",
-=======
-        environment: "dev",
->>>>>>> 35fb837ca2af6a571858b394bd3705b6cf78063e
         api_key: verifiedKey,
       });
       const aiText =

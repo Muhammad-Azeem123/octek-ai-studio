@@ -11,19 +11,12 @@ const MODES = [
 
 interface Props {
   open: boolean;
-<<<<<<< HEAD
   userId?: string | null;
-=======
->>>>>>> 35fb837ca2af6a571858b394bd3705b6cf78063e
   onClose: () => void;
   onCreated: (appId?: string) => void;
 }
 
-<<<<<<< HEAD
 export function NewAppModal({ open, userId, onClose, onCreated }: Props) {
-=======
-export function NewAppModal({ open, onClose, onCreated }: Props) {
->>>>>>> 35fb837ca2af6a571858b394bd3705b6cf78063e
   const [name, setName] = useState("");
   const [mode, setMode] = useState("html");
   const [width, setWidth] = useState("");
@@ -50,11 +43,7 @@ export function NewAppModal({ open, onClose, onCreated }: Props) {
     }
     setSubmitting(true);
     try {
-<<<<<<< HEAD
       const res = await api.createRepo({ user_id: userId, name: name.trim(), mode, width, height });
-=======
-      const res = await api.createRepo({ name: name.trim(), mode, width, height });
->>>>>>> 35fb837ca2af6a571858b394bd3705b6cf78063e
       toast.push({ kind: "success", title: "App created" });
       onCreated(res?.app_id);
       onClose();
