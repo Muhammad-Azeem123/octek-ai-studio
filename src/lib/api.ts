@@ -1,17 +1,17 @@
 // API integration for OCTEK AI Builder webhooks
 const DEFAULT_WEBHOOK_BASE = "https://n8n.octek.org/webhook";
-const WEBHOOK_PROXY_PREFIX = "/webhook-api";
 
-/** Browser uses same-origin proxy (server.ts) to avoid n8n CORS; SSR uses the real webhook host. */
+/** Always prefer the real webhook host to avoid duplicate proxy->direct retries. */
 function resolveWebhookBase(): string {
-  const viteEnv = typeof import.meta !== "undefined" ? import.meta.env : {};
-  const raw = viteEnv.VITE_N8N_WEBHOOK_BASE ?? viteEnv.N8N_WEBHOOK_BASE;
+  const viteEnv =
+    (typeof import.meta !== "undefined" ? (import.meta.env as Record<string, unknown>) : {}) ?? {};
+  const raw = viteEnv["VITE_N8N_WEBHOOK_BASE"] ?? viteEnv["N8N_WEBHOOK_BASE"];
   if (raw && String(raw).trim()) {
     const trimmed = String(raw).trim().replace(/\/$/, "");
     if (/^https?:\/\//i.test(trimmed)) return trimmed;
-    return trimmed;
+    // If an invalid or relative value is provided, fall back to the known-good host.
+    return DEFAULT_WEBHOOK_BASE;
   }
-  if (typeof window !== "undefined") return WEBHOOK_PROXY_PREFIX;
   return DEFAULT_WEBHOOK_BASE;
 }
 
@@ -53,61 +53,32 @@ function withUserId<T extends Record<string, unknown>>(
 
 async function postJson<T>(url: string, body: unknown): Promise<T> {
   const payload = JSON.stringify(body);
-  const doFetch = async (target: string): Promise<T> => {
-    const res = await fetch(target, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: payload,
-    });
-    if (!res.ok) throw new Error(`Request failed: ${res.status}`);
-    const text = await res.text();
-    try {
-      return JSON.parse(text) as T;
-    } catch {
-      return text as unknown as T;
-    }
-  };
-
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: payload,
+  });
+  if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+  const text = await res.text();
   try {
-    return await doFetch(url);
-  } catch (err) {
-    // Dev proxy may return a 200 with broken content-encoding.
-    if (typeof window !== "undefined" && url.startsWith(WEBHOOK_PROXY_PREFIX)) {
-      const fallback = `${DEFAULT_WEBHOOK_BASE}${url.slice(WEBHOOK_PROXY_PREFIX.length)}`;
-      console.warn("Webhook proxy POST failed, retrying direct n8n URL", { url, err, fallback });
-      return await doFetch(fallback);
-    }
-    throw err;
+    return JSON.parse(text) as T;
+  } catch {
+    return text as unknown as T;
   }
 }
 
 async function getJson<T>(url: string): Promise<T> {
-  const doFetch = async (target: string): Promise<T> => {
-    const res = await fetch(target, {
-      method: "GET",
-      headers: { Accept: "application/json" },
-    });
-    if (!res.ok) throw new Error(`Request failed: ${res.status}`);
-    const text = await res.text();
-    if (!text.trim()) return [] as unknown as T;
-    try {
-      return JSON.parse(text) as T;
-    } catch {
-      return text as unknown as T;
-    }
-  };
-
+  const res = await fetch(url, {
+    method: "GET",
+    headers: { Accept: "application/json" },
+  });
+  if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+  const text = await res.text();
+  if (!text.trim()) return [] as unknown as T;
   try {
-    return await doFetch(url);
-  } catch (err) {
-    // In dev, the /webhook-api proxy can occasionally return a mis-encoded body.
-    // Fall back to calling the n8n host directly so the UI still works.
-    if (typeof window !== "undefined" && url.startsWith(WEBHOOK_PROXY_PREFIX)) {
-      const fallback = `${DEFAULT_WEBHOOK_BASE}${url.slice(WEBHOOK_PROXY_PREFIX.length)}`;
-      console.warn("Webhook proxy failed, retrying direct n8n URL", { url, err, fallback });
-      return await doFetch(fallback);
-    }
-    throw err;
+    return JSON.parse(text) as T;
+  } catch {
+    return text as unknown as T;
   }
 }
 
@@ -139,9 +110,9 @@ function normalizeAppsResponse(data: unknown): AppItem[] {
       if (!parsedItem || typeof parsedItem !== "object") return null;
       const raw = parsedItem as Record<string, unknown>;
       // n8n often returns [{ json: {...row} }]
-      const app = (raw.json && typeof raw.json === "object"
-        ? (raw.json as Record<string, unknown>)
-        : raw) as Record<string, unknown>;
+      const app = (
+        raw.json && typeof raw.json === "object" ? (raw.json as Record<string, unknown>) : raw
+      ) as Record<string, unknown>;
       // Support legacy/typoed fields from workflow tables as well.
       const appId = app.app_id ?? app.appId ?? app.app_jd ?? app.appIdd ?? app.id;
       if (!appId) return null;
@@ -185,8 +156,7 @@ export const api = {
       error?: string;
     }>(`${BASE}/detect_key`, withUserId({ api_key }, user_id)),
 
-  getConvo: (app_id: string) =>
-    postJson<unknown>(`${BASE}/get_convo_99dj348`, { app_id }),
+  getConvo: (app_id: string) => postJson<unknown>(`${BASE}/get_convo_99dj348`, { app_id }),
 
   uploadFiles: (files: UploadedFilePayload[]) =>
     postJson<{ urls?: string[]; success?: boolean }>(`${BASE}/upload_files_99dj348`, {
@@ -202,10 +172,11 @@ export const api = {
     agent_framework: string;
     environment: string;
     api_key: string;
-  }) => postJson<{ output?: string; response?: string; message?: string }>(
-    `${BASE}/run_agent_99dj349`,
-    payload,
-  ),
+  }) =>
+    postJson<{ output?: string; response?: string; message?: string }>(
+      `${BASE}/run_agent_99dj349`,
+      payload,
+    ),
 
   createRepo: ({
     user_id,
@@ -270,13 +241,7 @@ function unwrapConvoPayload(data: unknown): unknown {
     if (cur && typeof cur === "object") {
       const o = cur as Record<string, unknown>;
       const nested =
-        o.messages ??
-        o.conversation ??
-        o.data ??
-        o.result ??
-        o.body ??
-        o.json ??
-        o.output;
+        o.messages ?? o.conversation ?? o.data ?? o.result ?? o.body ?? o.json ?? o.output;
       if (nested !== undefined && nested !== cur) {
         cur = parseMaybeJson(nested);
         continue;
