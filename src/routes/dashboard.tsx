@@ -118,6 +118,8 @@ function Dashboard() {
             ),
           ),
         ]);
+        // Temporary debug to inspect shape coming from webhook
+        console.log("loadApps result for userId", userId, { raw: res });
         const list = Array.isArray(res) ? res : [];
         setApps(list);
         if (autoSelectId) {

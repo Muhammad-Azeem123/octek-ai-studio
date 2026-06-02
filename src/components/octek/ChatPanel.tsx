@@ -74,6 +74,20 @@ export function ChatPanel({
   const taRef = useRef<HTMLTextAreaElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const toast = useToast();
+  const pollSeqRef = useRef(0);
+  const appIdRef = useRef<string | null>(app?.app_id ?? null);
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    appIdRef.current = app?.app_id ?? null;
+  }, [app?.app_id]);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   // Load convo when app changes
   useEffect(() => {
@@ -170,6 +184,9 @@ export function ChatPanel({
     const text = input.trim();
     if (!text) return;
 
+    const appId = app.app_id;
+    const persistedLenBeforeSend = messages.length;
+
     setMessages((m) => [...m, { role: "human", content: text }]);
     setInput("");
     setSending(true);
@@ -186,16 +203,89 @@ export function ChatPanel({
         api_key: verifiedKey,
       });
       const aiText =
-        (typeof res === "string" ? res : res?.output ?? res?.response ?? res?.message) ||
-        "Done.";
+        (typeof res === "string" ? res : res?.output ?? res?.response ?? res?.message) || "Done.";
       setMessages((m) => [...m, { role: "ai", content: String(aiText) }]);
       onAfterSend();
-    } catch (e: any) {
-      setMessages((m) => [
-        ...m,
-        { role: "ai", content: `**Error:** ${e?.message ?? "Request failed"}` },
-      ]);
-      toast.push({ kind: "error", title: "Agent error", message: e?.message });
+    } catch (e) {
+      const message =
+        e instanceof Error
+          ? e.message
+          : typeof e === "string"
+            ? e
+            : typeof e === "object" && e && "message" in e
+              ? String((e as { message?: unknown }).message ?? "Request failed")
+              : "Request failed";
+      const isTimeoutLike = /504|timeout|timed out|Failed to fetch|NetworkError/i.test(message);
+
+      // If the request timed out but the backend already completed the job,
+      // the next refresh shows the generated result. We emulate that by polling
+      // for the updated conversation.
+      if (isTimeoutLike) {
+        const pollId = ++pollSeqRef.current;
+        setMessages((m) => [
+          ...m,
+          { role: "ai", content: "_Agent is still working. Fetching results..._" },
+        ]);
+        toast.push({
+          kind: "warning",
+          title: "Agent is taking longer",
+          message: "Still building... we'll keep checking for up to 6 minutes.",
+        });
+
+        const startAt = Date.now();
+        const maxWaitMs = 360_000;
+        const pollEveryMs = 8_000;
+
+        const pollOnce = async () => {
+          // Cancel if a new send started or user switched apps/unmounted.
+          if (!mountedRef.current || pollSeqRef.current !== pollId) return;
+          if (appIdRef.current !== appId) return;
+
+          try {
+            const d = await api.getConvo(appId);
+            const normalized = normalizeConvo(d);
+            const hasAnyAi = normalized.some(
+              (m) => m.role === "ai" && String(m.content).trim(),
+            );
+            const hasNewServerMessages = normalized.length > persistedLenBeforeSend;
+            if (hasAnyAi && hasNewServerMessages) {
+              setMessages(normalized);
+              onAfterSend();
+              return;
+            }
+          } catch {
+            // Ignore transient poll errors; we'll retry until max wait.
+          }
+
+          if (Date.now() - startAt >= maxWaitMs) {
+            if (!mountedRef.current || pollSeqRef.current !== pollId) return;
+            setMessages((m) => [
+              ...m.filter((x) => x.content !== "_Agent is still working. Fetching results..._"),
+              {
+                role: "ai",
+                content:
+                  `**Error:** ${message}\n\n` +
+                  "_The request is still not available after 6 minutes. Please try refresh or resend._",
+              },
+            ]);
+            toast.push({ kind: "error", title: "Agent error", message });
+            return;
+          }
+
+          setTimeout(() => {
+            // Use setTimeout recursion instead of a tight loop.
+            void pollOnce();
+          }, pollEveryMs);
+        };
+
+        void pollOnce();
+      } else {
+        setMessages((m) => [
+          ...m,
+          { role: "ai", content: `**Error:** ${message}` },
+        ]);
+        toast.push({ kind: "error", title: "Agent error", message });
+      }
     } finally {
       setSending(false);
     }

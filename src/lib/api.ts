@@ -36,61 +36,120 @@ export interface UploadedFilePayload {
   base64: string;
 }
 
-function withUserId<T extends Record<string, unknown>>(body: T, user_id?: string | null): T & { user_id?: string } {
-  return user_id ? { ...body, user_id } : body;
+function normalizeUserId(userId?: string | null): string | null {
+  const trimmed = String(userId ?? "").trim();
+  return trimmed ? trimmed : null;
+}
+
+function withUserId<T extends Record<string, unknown>>(
+  body: T,
+  user_id?: string | null,
+): T & { user_id?: string; uuid?: string; userId?: string } {
+  const normalized = normalizeUserId(user_id);
+  if (!normalized) return body;
+  // Some webhook nodes read `user_id`, others map `uuid`/`userId`.
+  return { ...body, user_id: normalized, uuid: normalized, userId: normalized };
 }
 
 async function postJson<T>(url: string, body: unknown): Promise<T> {
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-  if (!res.ok) throw new Error(`Request failed: ${res.status}`);
-  const text = await res.text();
+  const payload = JSON.stringify(body);
+  const doFetch = async (target: string): Promise<T> => {
+    const res = await fetch(target, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: payload,
+    });
+    if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+    const text = await res.text();
+    try {
+      return JSON.parse(text) as T;
+    } catch {
+      return text as unknown as T;
+    }
+  };
+
   try {
-    return JSON.parse(text) as T;
-  } catch {
-    return text as unknown as T;
+    return await doFetch(url);
+  } catch (err) {
+    // Dev proxy may return a 200 with broken content-encoding.
+    if (typeof window !== "undefined" && url.startsWith(WEBHOOK_PROXY_PREFIX)) {
+      const fallback = `${DEFAULT_WEBHOOK_BASE}${url.slice(WEBHOOK_PROXY_PREFIX.length)}`;
+      console.warn("Webhook proxy POST failed, retrying direct n8n URL", { url, err, fallback });
+      return await doFetch(fallback);
+    }
+    throw err;
   }
 }
 
 async function getJson<T>(url: string): Promise<T> {
-  const res = await fetch(url, {
-    method: "GET",
-    headers: { Accept: "application/json" },
-  });
-  if (!res.ok) throw new Error(`Request failed: ${res.status}`);
-  const text = await res.text();
-  if (!text.trim()) return [] as unknown as T;
+  const doFetch = async (target: string): Promise<T> => {
+    const res = await fetch(target, {
+      method: "GET",
+      headers: { Accept: "application/json" },
+    });
+    if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+    const text = await res.text();
+    if (!text.trim()) return [] as unknown as T;
+    try {
+      return JSON.parse(text) as T;
+    } catch {
+      return text as unknown as T;
+    }
+  };
+
   try {
-    return JSON.parse(text) as T;
-  } catch {
-    return text as unknown as T;
+    return await doFetch(url);
+  } catch (err) {
+    // In dev, the /webhook-api proxy can occasionally return a mis-encoded body.
+    // Fall back to calling the n8n host directly so the UI still works.
+    if (typeof window !== "undefined" && url.startsWith(WEBHOOK_PROXY_PREFIX)) {
+      const fallback = `${DEFAULT_WEBHOOK_BASE}${url.slice(WEBHOOK_PROXY_PREFIX.length)}`;
+      console.warn("Webhook proxy failed, retrying direct n8n URL", { url, err, fallback });
+      return await doFetch(fallback);
+    }
+    throw err;
   }
 }
 
 function normalizeAppsResponse(data: unknown): AppItem[] {
+  const parseMaybeJson = (value: unknown): unknown => {
+    if (typeof value !== "string") return value;
+    const trimmed = value.trim();
+    if (!trimmed.startsWith("{") && !trimmed.startsWith("[")) return value;
+    try {
+      return JSON.parse(trimmed) as unknown;
+    } catch {
+      return value;
+    }
+  };
+
   const pickArray = (value: unknown): unknown[] => {
-    if (Array.isArray(value)) return value;
+    const parsed = parseMaybeJson(value);
+    if (Array.isArray(parsed)) return parsed;
     if (value && typeof value === "object") {
-      const obj = value as Record<string, unknown>;
-      return pickArray(obj.apps ?? obj.data ?? obj.items ?? obj.result ?? []);
+      const obj = parsed as Record<string, unknown>;
+      return pickArray(obj.apps ?? obj.data ?? obj.items ?? obj.result ?? obj.body ?? []);
     }
     return [];
   };
 
   return pickArray(data)
     .map((item): AppItem | null => {
-      if (!item || typeof item !== "object") return null;
-      const app = item as Record<string, unknown>;
-      const appId = app.app_id ?? app.appId ?? app.id;
+      const parsedItem = parseMaybeJson(item);
+      if (!parsedItem || typeof parsedItem !== "object") return null;
+      const raw = parsedItem as Record<string, unknown>;
+      // n8n often returns [{ json: {...row} }]
+      const app = (raw.json && typeof raw.json === "object"
+        ? (raw.json as Record<string, unknown>)
+        : raw) as Record<string, unknown>;
+      // Support legacy/typoed fields from workflow tables as well.
+      const appId = app.app_id ?? app.appId ?? app.app_jd ?? app.appIdd ?? app.id;
       if (!appId) return null;
       return {
         app_id: String(appId),
-        name: String(app.name ?? app.app_name ?? app.title ?? "Untitled"),
-        app_mode: String(app.app_mode ?? app.mode ?? "html"),
-        repo_url: String(app.repo_url ?? app.repoUrl ?? ""),
+        name: String(app.name ?? app.app_name ?? app.appName ?? app.title ?? "Untitled"),
+        app_mode: String(app.app_mode ?? app.appMode ?? app.mode ?? "html"),
+        repo_url: String(app.repo_url ?? app.repoUrl ?? app.repo ?? app.app_url ?? ""),
       };
     })
     .filter(Boolean) as AppItem[];
@@ -105,10 +164,15 @@ function withQuery(url: string, params: Record<string, string | null | undefined
   return qs ? `${url}?${qs}` : url;
 }
 
+function userIdQueryOnly(user_id?: string | null): Record<string, string | null> {
+  const normalized = normalizeUserId(user_id);
+  return { user_id: normalized };
+}
+
 export const api = {
   getApps: async (user_id?: string | null) =>
     normalizeAppsResponse(
-      await getJson<unknown>(withQuery(`${BASE}/get_apps_99dj348`, { user_id })),
+      await getJson<unknown>(withQuery(`${BASE}/get_apps_99dj348`, userIdQueryOnly(user_id))),
     ),
 
   detectKey: (api_key: string, user_id?: string | null) =>
