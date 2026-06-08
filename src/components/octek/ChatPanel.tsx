@@ -11,7 +11,14 @@ import {
   Lock,
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
-import { api, fileToBase64, normalizeConvo, type AppItem, type ConvoMessage } from "@/lib/api";
+import {
+  api,
+  extractAgentResponseText,
+  fileToBase64,
+  normalizeConvo,
+  type AppItem,
+  type ConvoMessage,
+} from "@/lib/api";
 import { useToast } from "./ToastProvider";
 import { LockedOverlay } from "./LockedOverlay";
 
@@ -202,12 +209,11 @@ export function ChatPanel({
         environment: "production",
         api_key: verifiedKey,
       });
-      const aiText =
-        (typeof res === "string" ? res : res?.output ?? res?.response ?? res?.message) || "Done.";
+      const aiText = extractAgentResponseText(res) ?? "Done.";
       setMessages((m) => [...m, { role: "ai", content: String(aiText) }]);
       onAfterSend();
     } catch (e) {
-      const message =
+      const fallbackMessage =
         e instanceof Error
           ? e.message
           : typeof e === "string"
@@ -215,6 +221,7 @@ export function ChatPanel({
             : typeof e === "object" && e && "message" in e
               ? String((e as { message?: unknown }).message ?? "Request failed")
               : "Request failed";
+      const message = extractAgentResponseText(e) ?? fallbackMessage;
       const isTimeoutLike = /504|timeout|timed out|Failed to fetch|NetworkError/i.test(message);
 
       // If the request timed out but the backend already completed the job,

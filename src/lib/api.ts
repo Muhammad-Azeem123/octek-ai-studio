@@ -36,6 +36,21 @@ export interface UploadedFilePayload {
   base64: string;
 }
 
+export class ApiResponseError extends Error {
+  status: number;
+  payload: unknown;
+  bodyText: string;
+
+  constructor(status: number, payload: unknown, bodyText: string) {
+    const extracted = extractAgentResponseText(payload) ?? bodyText.trim();
+    super(extracted || `Request failed: ${status}`);
+    this.name = "ApiResponseError";
+    this.status = status;
+    this.payload = payload;
+    this.bodyText = bodyText;
+  }
+}
+
 function normalizeUserId(userId?: string | null): string | null {
   const trimmed = String(userId ?? "").trim();
   return trimmed ? trimmed : null;
@@ -51,6 +66,15 @@ function withUserId<T extends Record<string, unknown>>(
   return { ...body, user_id: normalized, uuid: normalized, userId: normalized };
 }
 
+function parseResponseText(text: string): unknown {
+  if (!text.trim()) return "";
+  try {
+    return JSON.parse(text) as unknown;
+  } catch {
+    return text;
+  }
+}
+
 async function postJson<T>(url: string, body: unknown): Promise<T> {
   const payload = JSON.stringify(body);
   const res = await fetch(url, {
@@ -58,13 +82,10 @@ async function postJson<T>(url: string, body: unknown): Promise<T> {
     headers: { "Content-Type": "application/json" },
     body: payload,
   });
-  if (!res.ok) throw new Error(`Request failed: ${res.status}`);
   const text = await res.text();
-  try {
-    return JSON.parse(text) as T;
-  } catch {
-    return text as unknown as T;
-  }
+  const parsed = parseResponseText(text);
+  if (!res.ok) throw new ApiResponseError(res.status, parsed, text);
+  return parsed as T;
 }
 
 async function getJson<T>(url: string): Promise<T> {
@@ -72,14 +93,97 @@ async function getJson<T>(url: string): Promise<T> {
     method: "GET",
     headers: { Accept: "application/json" },
   });
-  if (!res.ok) throw new Error(`Request failed: ${res.status}`);
   const text = await res.text();
+  const parsed = parseResponseText(text);
+  if (!res.ok) throw new ApiResponseError(res.status, parsed, text);
   if (!text.trim()) return [] as unknown as T;
+  return parsed as T;
+}
+
+const RESPONSE_CONTENT_KEYS = [
+  "response",
+  "output",
+  "message",
+  "error",
+  "warning",
+  "info",
+  "content",
+  "text",
+  "detail",
+  "details",
+  "summary",
+  "reason",
+];
+
+const RESPONSE_ENVELOPE_KEYS = [
+  "data",
+  "result",
+  "body",
+  "json",
+  "payload",
+  "agent_response",
+  "agentResponse",
+];
+
+function stringifyResponseObject(value: unknown): string | null {
+  if (value == null) return null;
+  if (typeof value === "string") return value.trim() ? value : null;
+  if (typeof value === "number" || typeof value === "boolean") return String(value);
   try {
-    return JSON.parse(text) as T;
+    return JSON.stringify(value, null, 2);
   } catch {
-    return text as unknown as T;
+    return String(value);
   }
+}
+
+function extractResponseText(value: unknown, seen: WeakSet<object>): string | null {
+  if (value == null) return null;
+  if (typeof value === "string") {
+    if (!value.trim()) return null;
+    const parsed = parseMaybeJson(value);
+    if (parsed !== value) return extractResponseText(parsed, seen) ?? value;
+    return value;
+  }
+  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  if (value instanceof Error) {
+    const err = value as Error & { payload?: unknown; bodyText?: string };
+    return (
+      extractResponseText(err.payload, seen) ??
+      extractResponseText(err.bodyText, seen) ??
+      (err.message.trim() ? err.message : null)
+    );
+  }
+  if (Array.isArray(value)) {
+    const extracted = value
+      .map((item) => extractResponseText(item, seen))
+      .filter((item): item is string => !!item && item.trim());
+    if (extracted.length === 1) return extracted[0];
+    if (extracted.length > 1) return extracted.join("\n\n");
+    return stringifyResponseObject(value);
+  }
+  if (typeof value === "object") {
+    if (seen.has(value)) return null;
+    seen.add(value);
+
+    const record = value as Record<string, unknown>;
+    for (const key of RESPONSE_CONTENT_KEYS) {
+      if (record[key] == null) continue;
+      const extracted = extractResponseText(record[key], seen);
+      if (extracted?.trim()) return extracted;
+    }
+    for (const key of RESPONSE_ENVELOPE_KEYS) {
+      if (record[key] == null || record[key] === value) continue;
+      const extracted = extractResponseText(record[key], seen);
+      if (extracted?.trim()) return extracted;
+    }
+
+    return stringifyResponseObject(value);
+  }
+  return null;
+}
+
+export function extractAgentResponseText(value: unknown): string | null {
+  return extractResponseText(value, new WeakSet<object>());
 }
 
 function normalizeAppsResponse(data: unknown): AppItem[] {
