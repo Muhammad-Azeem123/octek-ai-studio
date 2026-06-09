@@ -2,22 +2,28 @@ import { useEffect, useState } from "react";
 import { Moon, Sun } from "lucide-react";
 
 const KEY = "octek-theme";
+type Theme = "dark" | "light";
+
+function getStoredTheme(): Theme {
+  try {
+    const saved = localStorage.getItem(KEY);
+    return saved === "light" || saved === "dark" ? saved : "dark";
+  } catch {
+    return "dark";
+  }
+}
 
 export function useTheme() {
-  const [theme, setTheme] = useState<"dark" | "light">("dark");
-  useEffect(() => {
-    const saved = (typeof localStorage !== "undefined" && localStorage.getItem(KEY)) as
-      | "dark"
-      | "light"
-      | null;
-    if (saved) setTheme(saved);
-  }, []);
+  const [theme, setTheme] = useState<Theme>(getStoredTheme);
+
   useEffect(() => {
     const el = document.documentElement;
     el.classList.toggle("light", theme === "light");
     try {
       localStorage.setItem(KEY, theme);
-    } catch {}
+    } catch {
+      // Ignore storage failures so the theme still applies in the current page.
+    }
   }, [theme]);
   return { theme, toggle: () => setTheme((t) => (t === "dark" ? "light" : "dark")) };
 }
