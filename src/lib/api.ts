@@ -330,7 +330,12 @@ function unwrapConvoPayload(data: unknown): unknown {
   for (let depth = 0; depth < 8; depth++) {
     if (Array.isArray(cur)) {
       if (cur.length === 1) {
-        cur = parseMaybeJson(cur[0]);
+        // Don't unwrap if the single item is already a human/ai pair —
+        // doing so would turn an array into a bare object that
+        // collectHumanAiMessages can't process correctly.
+        const single = parseMaybeJson(cur[0]);
+        if (isHumanAiPair(single)) break;
+        cur = single;
         continue;
       }
       const jsonItems = cur.filter(
@@ -344,10 +349,23 @@ function unwrapConvoPayload(data: unknown): unknown {
     }
     if (cur && typeof cur === "object") {
       const o = cur as Record<string, unknown>;
+      // When the object has a messages/conversation key, unwrap it but keep
+      // it as an array if it contains human/ai pairs so collectHumanAiMessages
+      // can handle it properly.
       const nested =
         o.messages ?? o.conversation ?? o.data ?? o.result ?? o.body ?? o.json ?? o.output;
       if (nested !== undefined && nested !== cur) {
-        cur = parseMaybeJson(nested);
+        const parsedNested = parseMaybeJson(nested);
+        // If the nested value is an array of human/ai pairs, return it directly
+        // rather than continuing to unwrap (which collapses single-item arrays).
+        if (
+          Array.isArray(parsedNested) &&
+          parsedNested.length > 0 &&
+          parsedNested.some(isHumanAiPair)
+        ) {
+          return parsedNested;
+        }
+        cur = parsedNested;
         continue;
       }
       break;
@@ -393,6 +411,11 @@ function collectHumanAiMessages(payload: unknown): ConvoMessage[] {
     const row = payload as Record<string, unknown>;
     if (Array.isArray(row.messages) && row.messages.some(isHumanAiPair)) {
       return expandHumanAiPairs(row.messages);
+    }
+    // Handle a single top-level { human, ai } object (e.g. after envelope
+    // unwrapping collapsed a 1-item array before we could stop it).
+    if (isHumanAiPair(row)) {
+      return expandHumanAiPairs([row]);
     }
   }
   return out;
