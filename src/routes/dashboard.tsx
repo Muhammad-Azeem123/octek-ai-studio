@@ -50,8 +50,8 @@ function Dashboard() {
     typeof window !== "undefined" ? loadTrialState(getCurrentUserId()) : { ownVerifiedKey: null, promptCount: 0 };
 
   useEffect(() => {
-    if (!isLoggedIn()) window.location.href = "/login";
-  }, []);
+    if (!isLoggedIn()) navigate({ to: "/login" });
+  }, [navigate]);
 
   const handleLogout = useCallback(() => {
     logoutUser();

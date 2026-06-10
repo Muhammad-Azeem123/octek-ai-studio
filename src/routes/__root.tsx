@@ -1,14 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import {
-  Outlet,
-  Link,
-  createRootRouteWithContext,
-  useRouter,
-  HeadContent,
-  Scripts,
-} from "@tanstack/react-router";
-
-import appCss from "../styles.css?url";
+import { Outlet, Link, createRootRouteWithContext, useRouter } from "@tanstack/react-router";
 
 function NotFoundComponent() {
   return (
@@ -55,12 +46,12 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
           >
             Try again
           </button>
-          <a
-            href="/"
+          <Link
+            to="/"
             className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
           >
             Go home
-          </a>
+          </Link>
         </div>
       </div>
     </div>
@@ -72,41 +63,25 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "OCTEK AI Builder" },
+      {
+        name: "description",
+        content: "Build AI-powered web apps in seconds with OCTEK AI Builder.",
+      },
+      { name: "author", content: "OCTEK" },
+      { property: "og:title", content: "OCTEK AI Builder" },
+      {
+        property: "og:description",
+        content: "Build AI-powered web apps in seconds with OCTEK AI Builder.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@Lovable" },
-    ],
-    links: [
-      {
-        rel: "stylesheet",
-        href: appCss,
-      },
     ],
   }),
-  shellComponent: RootShell,
   component: RootComponent,
   notFoundComponent: NotFoundComponent,
   errorComponent: ErrorComponent,
 });
-
-function RootShell({ children }: { children: React.ReactNode }) {
-  return (
-    <html lang="en">
-      <head>
-        <HeadContent />
-      </head>
-      <body>
-        {children}
-        <Scripts />
-      </body>
-    </html>
-  );
-}
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();

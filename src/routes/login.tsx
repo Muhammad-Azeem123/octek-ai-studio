@@ -39,7 +39,7 @@ function LoginPage() {
       const { uuid } = await loginUser(submittedEmail, submittedPassword);
       console.log("Logged in, uuid:", uuid);
 
-      window.location.href = "/dashboard";
+      navigate({ to: "/dashboard" });
     } catch (err) {
       console.error("Login error:", err);
       setError(err instanceof Error ? err.message : "Login failed");

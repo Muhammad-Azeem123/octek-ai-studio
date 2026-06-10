@@ -1,3 +1,5 @@
+import { appPath } from '@/lib/paths';
+
 const viteEnv = typeof import.meta !== 'undefined' ? import.meta.env || {} : {};
 const processEnv = typeof process !== 'undefined' && process.env ? process.env : {};
 const env = { ...processEnv, ...viteEnv };
@@ -158,7 +160,7 @@ export const getUserById = async (uuid) => {
 export const logoutUser = () => {
   localStorage.removeItem('token');
   localStorage.removeItem('user_id');
-  window.location.href = '/';
+  window.location.href = appPath('/');
 };
 
 // 5. GET CURRENT USER_ID (use everywhere)
