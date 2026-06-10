@@ -42,6 +42,8 @@ interface Props {
   app: AppItem | null;
   verifiedKey: string | null;
   onAfterSend: () => void;
+  /** Called once per valid send attempt, regardless of success or error. Use this to increment the free-trial prompt counter. */
+  onPromptUsed?: () => void;
   locked?: boolean;
   promptCount?: number;
   promptLimit?: number;
@@ -60,6 +62,7 @@ export function ChatPanel({
   app,
   verifiedKey,
   onAfterSend,
+  onPromptUsed,
   locked = false,
   promptCount = 0,
   promptLimit = 2,
@@ -197,6 +200,11 @@ export function ChatPanel({
     setMessages((m) => [...m, { role: "human", content: text }]);
     setInput("");
     setSending(true);
+
+    // Count the prompt as used immediately on submission — before the API call —
+    // so that errors (e.g. "model high usage") still consume a free slot.
+    // Only applies to free-trial users; verified users have onPromptUsed = undefined.
+    onPromptUsed?.();
 
     try {
       const res = await api.runAgent({

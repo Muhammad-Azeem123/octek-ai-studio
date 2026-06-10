@@ -256,8 +256,8 @@ function Dashboard() {
         verifiedKey={verifiedKey}
         onAfterSend={() => {
           setReloadToken((t) => t + 1);
-          handlePromptSent();
         }}
+        onPromptUsed={handlePromptSent}
         locked={locked}
         promptCount={promptCount}
         promptLimit={FREE_PROMPT_LIMIT}

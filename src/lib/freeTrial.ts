@@ -64,14 +64,27 @@ export function incrementPromptCount(userId: string): number {
   return next;
 }
 
-/** Fresh 2-prompt demo trial for a newly registered account. */
+/**
+ * Initialise the free trial for a newly registered account.
+ *
+ * IMPORTANT: only resets the prompt count when no record exists yet for this
+ * userId. If a count is already stored (e.g. because the user partially used
+ * their trial before a page reload or error) we leave it untouched — otherwise
+ * a re-login / error-recovery path can silently reset the counter back to 0.
+ */
 export function grantFreeTrial(userId: string) {
-  setPromptCount(userId, 0);
   try {
-    localStorage.removeItem(userKeyKey(userId));
-    localStorage.removeItem(userProviderKey(userId));
+    // Only write the initial count when this user has never had one stored.
+    const existing = localStorage.getItem(promptCountKey(userId));
+    if (existing === null) {
+      // Truly new user — initialise to 0 and clear any legacy keys.
+      setPromptCount(userId, 0);
+      localStorage.removeItem(userKeyKey(userId));
+      localStorage.removeItem(userProviderKey(userId));
+      clearLegacyTrialStorage();
+    }
+    // else: count already exists — do NOT overwrite it.
   } catch {}
-  clearLegacyTrialStorage();
 }
 
 function normalizeOwnKey(key: string | null): string | null {
