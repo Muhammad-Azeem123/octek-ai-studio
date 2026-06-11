@@ -35,6 +35,7 @@ jobs:
           VITE_AUTHORIZATION_HEADER: ${{ secrets.AUTHORIZATION_HEADER }}
           VITE_CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
           VITE_N8N_WEBHOOK_BASE: ${{ secrets.VITE_N8N_WEBHOOK_BASE }}
+          VITE_FREE_TRIAL_API_KEY: ${{ secrets.VITE_FREE_TRIAL_API_KEY }}
 
       - uses: actions/upload-pages-artifact@v3
         with:

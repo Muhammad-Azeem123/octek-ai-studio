@@ -7,10 +7,12 @@ export const FREE_PROMPT_LIMIT = 2;
 export const FREE_TRIAL_DEMO_API_KEY: string = (() => {
   const key = import.meta.env.VITE_FREE_TRIAL_API_KEY as string | undefined;
   if (!key) {
-    throw new Error(
+    console.warn(
       "[freeTrial] VITE_FREE_TRIAL_API_KEY is not set. " +
-      "Add it to your .env file and restart the dev server."
+      "Free-trial prompts will be disabled. " +
+      "Add the secret to GitHub repo settings and redeploy."
     );
+    return "";
   }
   return key;
 })();
