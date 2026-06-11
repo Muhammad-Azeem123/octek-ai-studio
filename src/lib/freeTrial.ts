@@ -1,7 +1,7 @@
 export const FREE_PROMPT_LIMIT = 2;
 
 /** Shared demo key — using this does not count as bringing your own key. */
-export const FREE_TRIAL_DEMO_API_KEY = "AIzaSyA_wVvnlQiPMK2pBwVaEAuKmbxrHvcWDg8";
+export const FREE_TRIAL_DEMO_API_KEY = "AIzaSyB9oabT7vdT7ChMHe_KVhGWhzvJyz5_Mao";
 
 const LEGACY_PROMPT_COUNT = "octek-prompt-count";
 const LEGACY_USER_KEY = "octek-user-verified-key";
