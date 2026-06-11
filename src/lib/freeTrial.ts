@@ -1,7 +1,19 @@
 export const FREE_PROMPT_LIMIT = 2;
 
-/** Shared demo key — using this does not count as bringing your own key. */
-export const FREE_TRIAL_DEMO_API_KEY = "AIzaSyB9oabT7vdT7ChMHe_KVhGWhzvJyz5_Mao";
+/** Shared demo key — using this does not count as bringing your own key.
+ *  Value is loaded from the VITE_FREE_TRIAL_API_KEY environment variable so
+ *  the actual secret is never committed to source control.
+ */
+export const FREE_TRIAL_DEMO_API_KEY: string = (() => {
+  const key = import.meta.env.VITE_FREE_TRIAL_API_KEY as string | undefined;
+  if (!key) {
+    throw new Error(
+      "[freeTrial] VITE_FREE_TRIAL_API_KEY is not set. " +
+      "Add it to your .env file and restart the dev server."
+    );
+  }
+  return key;
+})();
 
 const LEGACY_PROMPT_COUNT = "octek-prompt-count";
 const LEGACY_USER_KEY = "octek-user-verified-key";
@@ -17,7 +29,7 @@ function clearLegacyTrialStorage() {
     localStorage.removeItem(LEGACY_PROMPT_COUNT);
     localStorage.removeItem(LEGACY_USER_KEY);
     localStorage.removeItem(LEGACY_USER_PROVIDER);
-  } catch {}
+  } catch { }
 }
 
 function promptCountKey(userId: string) {
@@ -48,14 +60,14 @@ export function getPromptCount(userId: string | null): number {
       localStorage.removeItem(LEGACY_PROMPT_COUNT);
       return count;
     }
-  } catch {}
+  } catch { }
   return 0;
 }
 
 export function setPromptCount(userId: string, count: number) {
   try {
     localStorage.setItem(promptCountKey(userId), String(Math.max(0, count)));
-  } catch {}
+  } catch { }
 }
 
 export function incrementPromptCount(userId: string): number {
@@ -84,7 +96,7 @@ export function grantFreeTrial(userId: string) {
       clearLegacyTrialStorage();
     }
     // else: count already exists — do NOT overwrite it.
-  } catch {}
+  } catch { }
 }
 
 function normalizeOwnKey(key: string | null): string | null {
@@ -114,7 +126,7 @@ export function getUserVerifiedKey(userId: string | null): string | null {
       }
       return own;
     }
-  } catch {}
+  } catch { }
   return null;
 }
 
@@ -134,7 +146,7 @@ export function getUserVerifiedProvider(userId: string | null): string | null {
   if (!userId) return null;
   try {
     return localStorage.getItem(userProviderKey(userId));
-  } catch {}
+  } catch { }
   return null;
 }
 
@@ -143,5 +155,5 @@ export function setUserVerifiedKey(userId: string, key: string, provider: string
   try {
     localStorage.setItem(userKeyKey(userId), key.trim());
     localStorage.setItem(userProviderKey(userId), provider);
-  } catch {}
+  } catch { }
 }
