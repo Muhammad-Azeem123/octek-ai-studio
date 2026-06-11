@@ -201,10 +201,6 @@ export function ChatPanel({
     setInput("");
     setSending(true);
 
-    // Count the prompt as used immediately on submission — before the API call —
-    // so that errors (e.g. "model high usage") still consume a free slot.
-    // Only applies to free-trial users; verified users have onPromptUsed = undefined.
-    onPromptUsed?.();
 
     try {
       const res = await api.runAgent({
@@ -219,6 +215,8 @@ export function ChatPanel({
       });
       const aiText = extractAgentResponseText(res) ?? "Done.";
       setMessages((m) => [...m, { role: "ai", content: String(aiText) }]);
+      // Count after response is rendered — lock appears only after user sees the reply.
+      onPromptUsed?.();
       onAfterSend();
     } catch (e) {
       const fallbackMessage =
@@ -265,6 +263,8 @@ export function ChatPanel({
             const hasNewServerMessages = normalized.length > persistedLenBeforeSend;
             if (hasAnyAi && hasNewServerMessages) {
               setMessages(normalized);
+              // Result arrived — count the prompt after it is displayed.
+              onPromptUsed?.();
               onAfterSend();
               return;
             }
@@ -284,6 +284,8 @@ export function ChatPanel({
               },
             ]);
             toast.push({ kind: "error", title: "Agent error", message });
+            // Timed out with no result — still consumes a free slot, after error is shown.
+            onPromptUsed?.();
             return;
           }
 
@@ -300,6 +302,9 @@ export function ChatPanel({
           { role: "ai", content: `**Error:** ${message}` },
         ]);
         toast.push({ kind: "error", title: "Agent error", message });
+        // Non-timeout error (e.g. "model high usage") — consumes a free slot
+        // AFTER the error message is rendered so the lock never covers the response.
+        onPromptUsed?.();
       }
     } finally {
       setSending(false);
